@@ -25,9 +25,20 @@ To compile the project, use:
 ```sh
 make
 ```
-To run the simulation:
+
+To build and run the simulation in one step:
 ```sh
-./gas_station
+make start
+```
+
+To run the simulation after building:
+```sh
+make run
+```
+
+For debugging purposes:
+```sh
+make start_debug
 ```
 
 ## Input Configuration
