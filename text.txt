@@ -1,0 +1,136 @@
+/*
+
+Requirements:
+- We have cars, tanker, fuel storage, gas station.
+- Each car need some amount of fuel.
+- Cars arrive to station to get fuel.
+- If fuel is not enough, (iт many cases it will be the last car), car will just leave station.
+
+- We have 3 types of car: 
+	a) Auto 		- 10 l/100km
+	b) Van 			- 15 l/100km
+	c) Truck 		- 30 l/100km
+
+- User will be asked to set amount of cars each type. But on each step it will see how much left to reach a max amount of cars
+
+Task 1:
+1) Check if user use Linux OS
+2) Show message warning if it does not use Linux
+
+Task 2:
+1) Detect max number of threads user can use
+2) Create variable "max_cars" with default value 10
+3) Show user max value that it can use for each car type
+4) Ask user number of cars in range 10 < x < [max threads value] for each car type
+
+Task 3:
+1) After last car left gas station, show user how many fuel was consumed and total
+2) Show how many cars was filled fully and how many just left gas station because of lack of fuel (maybe only one - the last one)
+3) Show how long program worked
+4) Show how long each car type was waiting on fuel in average
+
+Ideas:
+1) Allow user to create text file with some structure where it can write information about cars. It can be a json file, where user can write:
+{
+	"total_fuel": 999999999,
+	"vehicles": [
+		{
+			"type": "auto",
+			"fuel_by_car": 10,
+			"waiting_time_sec": 2, // all cars will wait 2 seconds and then leave
+			"count": 5
+		},
+		{
+			"type": "van",
+			"fuel_by_car": 15,
+			"waiting_list": [
+				{
+					"waiting_time_sec": 2,
+					"count": 3
+				},
+				{
+					"waiting_time_sec": 5,
+ 					"count": 7
+				},
+			],
+		},
+		{
+			"type": "truck",
+			"fuel_by_car": 30,
+			"waiting_list": [
+				{
+					"waiting_time_sec": 15,
+					"count": 10
+				},
+				{
+					"waiting_time_sec": 9,
+ 					"count": 2
+				},
+			],
+		},
+	]
+}
+
+2) Create for example only 4 points where only one car can get fuel. So, we can create a queue of cars that will wait until one of the points will be free. I guess we need to use semaphore for this.
+
+3) Write result of the program into file
+
+4) Use time passed from beginning of the program:
+
+Example:
+[Time 00:00] 🚗 Auto #1 is refueling...
+[Time 00:02] 🚙 Van #2 arrived at the station. Waiting...
+[Time 00:05] 🚛 Truck #3 left due to long waiting (timeout).
+[Time 00:07] 🚗 Auto #1 left station. Fuel used: 10L
+
+5) If some car is waiting too long, we can make it have higher priority.
+Or we can manage priority based on car type. For example:
+	Truck - max
+	Van - middle
+	Auto - Low
+
+6) Create a separate set of fuel points exclusively for trucks.
+For example, we have 5 default fuel points available for all vehicles and 3 additional points reserved only for trucks. If there are trucks in the queue, they will use these 3 exclusive points whenever possible.
+
+However, trucks can still use the default fuel points if needed.
+
+For instance, suppose we have 5 cars arriving first, and 2 of them are trucks. In this case, all 5 vehicles use the default fuel points.
+
+Later, if 2 more trucks and 5 other cars join the queue, the 2 new trucks will not have to wait—they will immediately use the 3 exclusive truck-only points. Meanwhile, the 5 other cars will remain in the queue until a default fuel point becomes available.
+
+*/ 
+
+
+/*
+
+Step 1:
+Ask user number of cars and amount of fuel.
+This version will be simple. Just cars and they will consume 40 each.
+
+*/
+
+
+/*
+
+Step 2:
+Add different types of cars. So, user will be asked how many cars each time he want to test.
+
+*/
+
+
+/*
+
+Step 3:
+In this version we will write all results into file.
+
+*/
+
+
+/*
+
+Step 4:
+Create a queue for cars. When can will appear in queue we will start waiting_time_sec. So, in case when car in queue and will wait only 3 seconds, and this time was passed but it still in queue, this car will leave the gas station.
+
+
+*/
+
