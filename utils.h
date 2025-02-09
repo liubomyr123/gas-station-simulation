@@ -29,4 +29,6 @@ void print_max_number_of_threads();
 
 void print_total_simulation_time();
 
+void init_attributes_with_min_stack_size(pthread_attr_t *attributes_p);
+
 #endif

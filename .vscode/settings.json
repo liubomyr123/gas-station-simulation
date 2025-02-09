@@ -5,6 +5,8 @@
         "stdarg.h": "c",
         "local_lim.h": "c",
         "resource.h": "c",
-        "stdlib.h": "c"
+        "stdlib.h": "c",
+        "errno.h": "c",
+        "time.h": "c"
     }
 }

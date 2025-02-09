@@ -17,6 +17,7 @@
 #include <stdarg.h>
 #include <bits/local_lim.h>
 #include <sys/sysinfo.h>
+#include <semaphore.h>
 
 #include "utils.h"
 
@@ -40,15 +41,26 @@ typedef struct
 
 void init_attributes_with_min_stack_size(pthread_attr_t *attributes_p);
 void setup_main();
-void clean_up_main(Car *cars, int cars_number, Tanker *tankers, int tankers_number);
-int ask_user_number_of_cars();
-int ask_user_amount_of_fuel();
+void clean_up_main(Car *cars, Tanker *tankers);
+void ask_user_number_of_cars();
+void ask_user_amount_of_fuel();
+void ask_user_number_of_fuel_pumps();
+void ask_user_fuel_per_time();
+void ask_user_fuel_per_car();
 
 pthread_mutex_t dynamic_lock = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t dynamic_cond = PTHREAD_COND_INITIALIZER;
+sem_t fuel_pump_semaphore;
 
-int gas_station_fuel_storage = 0;
-int total_fuel_left = 0;
+static int gas_station_fuel_storage = 0;
+static int total_fuel_left = 0;
+static int number_of_fuel_pumps = 1;
+static int number_of_cars = 1;
+static int tankers_number = 1;
+static int fuel_per_time = 15;
+static int fuel_in_tanker = 150;
+static int fuel_pump_occupied = 0;
+static int fuel_per_car = 0;
 
 void *tanker(void *thread_data)
 {
@@ -85,13 +97,22 @@ void *tanker(void *thread_data)
         // Notify all waiting cars that fuel is available
         pthread_cond_broadcast(&dynamic_cond);
 
-        print_tanker(tanker_id, "✅ Fuel available and ready for consumption, preparing for next delivery...");
-        printf("\n");
+        if (total_fuel_left == 0)
+        {
+            print_tanker(tanker_id, "Tanker is leaving the station...");
+            printf("\n");
+            pthread_mutex_unlock(&dynamic_lock);
+            break;
+        }
+        else
+        {
+            print_tanker(tanker_id, "✅ Fuel available and ready for consumption, preparing for next delivery...");
+            printf("\n");
+            pthread_mutex_unlock(&dynamic_lock);
 
-        pthread_mutex_unlock(&dynamic_lock);
-
-        // Give cars a chance to acquire the mutex, check fuel, and proceed if possible
-        sleep(2);
+            // Give cars a chance to acquire the mutex, check fuel, and proceed if possible
+            sleep(2);
+        }
     }
     return NULL;
 }
@@ -103,13 +124,18 @@ void *car(void *thread_data)
     int car_waiting_time = car_data->waiting_time;
     int car_fuel_required = car_data->fuel_required;
 
+    sem_wait(&fuel_pump_semaphore);
+
     car_data->start_waiting_time = time(NULL);
-    print_car(car_id, "Attempting to get fuel...");
-    // printf("\n");
+    printf("\n");
+    print_car(car_id, "Attempting to get fuel...\n");
     sleep(1);
     pthread_mutex_lock(&dynamic_lock);
 
     int is_time_passed = 0;
+
+    fuel_pump_occupied++;
+    printf("\n⛽️ Fuel pump occupied by 🚗 #%d: %d/%d pumps now in use.\n\n", car_id, fuel_pump_occupied, number_of_fuel_pumps);
 
     if (total_fuel_left + gas_station_fuel_storage < car_fuel_required)
     {
@@ -179,41 +205,56 @@ void *car(void *thread_data)
             {
                 gas_station_fuel_storage -= car_fuel_required;
                 car_data->end_waiting_time = time(NULL);
-                print_car(car_id, "✅ Successfully refueled. Remaining fuel at station: %d liters.", gas_station_fuel_storage);
+                print_car(car_id, "✅ Successfully refueled %d liters. Remaining fuel at station: %d liters.", car_fuel_required, gas_station_fuel_storage);
             }
         }
     }
 
     double waiting_time = difftime(car_data->end_waiting_time, car_data->start_waiting_time);
-    print_car(car_id, "⏳ Waited for %.2f seconds", waiting_time);
+    print_car(car_id, "⏳ Waited for %.2f seconds\n", waiting_time);
 
     pthread_mutex_unlock(&dynamic_lock);
+
+    fuel_pump_occupied--;
+    if (fuel_pump_occupied == 0)
+    {
+        printf("⛽️ All fuel pumps are free\n");
+    }
+    else
+    {
+        printf("⛽️ Fuel pump freed by 🚗 #%d: %d/%d pumps still occupied.\n", car_id, fuel_pump_occupied, number_of_fuel_pumps);
+    }
+
+    sem_post(&fuel_pump_semaphore);
     return NULL;
 }
 
 int main()
 {
-    int cars_number = ask_user_number_of_cars();
-    int fuel_in_tanker = ask_user_amount_of_fuel();
+    printf("\n🚗 Welcome to the fueling station simulation! 🚗\n");
+
+    ask_user_number_of_cars();
+    ask_user_fuel_per_car();
+    ask_user_number_of_fuel_pumps();
+    ask_user_fuel_per_time();
+    ask_user_amount_of_fuel();
 
     setup_main();
 
-    pthread_t car_threads[cars_number];
-    Car cars[cars_number];
+    pthread_t car_threads[number_of_cars];
+    Car cars[number_of_cars];
 
-    int tankers_number = 1;
     pthread_t tanker_threads[tankers_number];
     Tanker tankers[tankers_number];
 
-    int fuel_per_time_default = 15;
     total_fuel_left = fuel_in_tanker;
 
-    for (int i = 0; i < cars_number; i++)
+    for (int i = 0; i < number_of_cars; i++)
     {
         int car_id = i + 1;
         cars[i].number = car_id;
         cars[i].waiting_time = 0;
-        cars[i].fuel_required = 30;
+        cars[i].fuel_required = fuel_per_car;
         cars[i].is_left_without_fuel = false;
 
         pthread_attr_t attributes;
@@ -231,7 +272,7 @@ int main()
         int tanker_id = i + 1;
         tankers[i].fuel_total = fuel_in_tanker;
         tankers[i].number = tanker_id;
-        tankers[i].fuel_per_time = fuel_per_time_default;
+        tankers[i].fuel_per_time = fuel_per_time;
         tankers[i].total_fuel_deliveries = 0;
 
         pthread_attr_t attributes;
@@ -243,7 +284,7 @@ int main()
         }
     }
 
-    for (int i = 0; i < cars_number; i++)
+    for (int i = 0; i < number_of_cars; i++)
     {
         int car_id = i + 1;
         if (pthread_join(car_threads[i], NULL) != 0)
@@ -260,30 +301,37 @@ int main()
         }
     }
 
-    clean_up_main(cars, cars_number, tankers, tankers_number);
+    clean_up_main(cars, tankers);
     return 0;
 }
 
-void print_car_statistics(Car *cars, int cars_number)
+void print_car_statistics(Car *cars)
 {
     double total_waiting_time = 0;
-    for (int i = 0; i < cars_number; i++)
+    double total_fuel = 0;
+    for (int i = 0; i < number_of_cars; i++)
     {
         double waiting_time = difftime(cars[i].end_waiting_time, cars[i].start_waiting_time);
-        if (cars[i].is_left_without_fuel) {
+        if (cars[i].is_left_without_fuel)
+        {
             printf("❌ Car #%d left without refueling after: %.2f seconds\n", cars[i].number, waiting_time);
-        } else {
-            printf("✅ Car #%d was fully fueled after: %.2f seconds\n", cars[i].number, waiting_time);
+        }
+        else
+        {
+            printf("✅ Car #%d was fully fueled %d liters after: %.2f seconds\n", cars[i].number, cars[i].fuel_required, waiting_time);
         }
         total_waiting_time += waiting_time;
+        total_fuel += cars[i].fuel_required;
     }
-    double average_waiting_time = total_waiting_time / cars_number;
+    double average_waiting_time = total_waiting_time / number_of_cars;
+    double average_fuel = total_fuel / number_of_cars;
     printf("\n");
     printf("⏳ Average car waiting time: %.2f seconds\n", average_waiting_time);
+    printf("🛢️  The average fuel per car is: %.2f liters.\n", average_fuel);
     printf("\n");
 }
 
-void print_tanker_statistics(Tanker *tankers, int tankers_number)
+void print_tanker_statistics(Tanker *tankers)
 {
     int all_tankers_fuel = 0;
     int all_fuel_deliveries = 0;
@@ -300,80 +348,167 @@ void print_tanker_statistics(Tanker *tankers, int tankers_number)
         all_fuel_per_time += current_fuel_per_time;
     }
     printf("🔥 Total fuel consumed: %d liters\n", all_tankers_fuel - gas_station_fuel_storage);
+    printf("🛢️  Fuel left in storage: %d liters\n", gas_station_fuel_storage);
     printf("🚚 Total fuel deliveries: %d\n", all_fuel_deliveries);
-    printf("💧 Tankers refuel 15 liters at a time\n");
+    printf("💧 Tankers refuel %d liters at a time\n", fuel_per_time);
 }
 
-void clean_up_main(Car *cars, int cars_number, Tanker *tankers, int tankers_number)
+void print_statistics(Car *cars, Tanker *tankers)
 {
-    pthread_mutex_destroy(&dynamic_lock);
-    pthread_cond_destroy(&dynamic_cond);
-
     printf("\n");
     printf("📊 STATISTICS:\n");
     printf("\n");
-    print_car_statistics(cars, cars_number);
-    print_tanker_statistics(tankers, tankers_number);
+    print_car_statistics(cars);
+    print_tanker_statistics(tankers);
     printf("\n");
-
-#ifdef DEBUG_
-    print_total_simulation_time();
-#endif
 }
 
-int ask_user_number_of_cars()
+void ask_user_number_of_cars()
 {
-    int number_of_cars = 5;
     int result;
 
-    printf("Please, write amount of cars in range 0 < X < 10: ");
+    printf("\nHow many cars will attempt to refuel today? (1-9)\n");
     while (1)
     {
+        printf("🚗 Enter the number of cars: ");
         result = scanf("%d", &number_of_cars);
 
-        if (result == 1 && number_of_cars > 0 && number_of_cars < 10)
-        {
-            break;
-        }
-        else
+        if (result != 1)
         {
             while (getchar() != '\n')
             {
             };
-
-            printf("Invalid input! Please, write amount of cars in range 0 < X < 10: ");
+            printf("❌ Invalid format! Please enter a number.\n");
+        }
+        else if (number_of_cars < 1 || number_of_cars > 10)
+        {
+            printf("❌ Invalid amount! Please enter a number between 1 and 9.\n");
+        }
+        else
+        {
+            printf("✅ Perfect! %d cars are ready to refuel at the station today.\n", number_of_cars);
+            break;
         }
     }
-
-    return number_of_cars;
 }
 
-int ask_user_amount_of_fuel()
+void ask_user_amount_of_fuel()
 {
-    int amount_of_fuel = 150;
     int result;
 
-    printf("Please, write amount of fuel in range 0 < X < 500: ");
+    printf("\nSpecify how much fuel will be available at the station (1-499 liters).\n");
     while (1)
     {
-        result = scanf("%d", &amount_of_fuel);
+        printf("🛢️  Enter fuel supply amount: ");
+        result = scanf("%d", &fuel_in_tanker);
 
-        if (result == 1 && amount_of_fuel > 0 && amount_of_fuel < 500)
-        {
-            break;
-        }
-        else
+        if (result != 1)
         {
             while (getchar() != '\n')
             {
             };
-
-            printf("Invalid input! Please, write amount of fuel in range 0 < X < 500: ");
+            printf("❌ Invalid format! Please enter a number.\n");
+        }
+        else if (fuel_in_tanker < 1 || fuel_in_tanker > 500)
+        {
+            printf("❌ Invalid amount! Please enter a number between 1 and 499 liters.\n");
+        }
+        else
+        {
+            printf("✅ Perfect! The station starts with 0 liters of fuel, and fuel will be gradually added by %d liters at a time.\n", fuel_per_time);
+            break;
         }
     }
-
-    return amount_of_fuel;
 }
+
+void ask_user_number_of_fuel_pumps()
+{
+    int result;
+
+    printf("\nSpecify how much fuel pumps will be available at the station (1-5 fuel pumps).\n");
+    while (1)
+    {
+        printf("⛽ Enter number of fuel pumps: ");
+        result = scanf("%d", &number_of_fuel_pumps);
+
+        if (result != 1)
+        {
+            while (getchar() != '\n')
+            {
+            };
+            printf("❌ Invalid format! Please enter a number.\n");
+        }
+        else if (number_of_fuel_pumps < 1 || number_of_fuel_pumps > 5)
+        {
+            printf("❌ Invalid amount! Please enter a number between 1 and 5.\n");
+        }
+        else
+        {
+            printf("✅ Perfect! The station will have %d fuel pumps.\n", number_of_fuel_pumps);
+            break;
+        }
+    }
+}
+
+void ask_user_fuel_per_time()
+{
+    int result;
+
+    printf("\nSpecify how much fuel the tanker will supply per time (15-50 liters).\n");
+    while (1)
+    {
+        printf("🛢️  Enter fuel supply per time: ");
+        result = scanf("%d", &fuel_per_time);
+
+        if (result != 1)
+        {
+            while (getchar() != '\n')
+            {
+            };
+            printf("❌ Invalid format! Please enter a number.\n");
+        }
+        else if (fuel_per_time < 15 || fuel_per_time > 50)
+        {
+            printf("❌ Invalid amount! Please enter a number between 15 and 50.\n");
+        }
+        else
+        {
+            printf("✅ Perfect! The tanker will supply %d liters of fuel per time.\n", fuel_per_time);
+            break;
+        }
+    }
+}
+
+void ask_user_fuel_per_car()
+{
+    int result;
+
+    printf("\nSpecify how much fuel the car will need (10-30 liters).\n");
+    while (1)
+    {
+        printf("🛢️  Enter the amount of fuel the car requires: ");
+        result = scanf("%d", &fuel_per_car);
+
+        if (result != 1)
+        {
+            while (getchar() != '\n')
+            {
+            };
+            printf("❌ Invalid format! Please enter a number.\n");
+        }
+        else if (fuel_per_car < 10 || fuel_per_car > 30)
+        {
+            printf("❌ Invalid amount! Please enter a number between 10 and 30.\n");
+        }
+        else
+        {
+            printf("✅ Perfect! The car will need %d liters of fuel.\n", fuel_per_car);
+            break;
+        }
+    }
+}
+
+
 
 void setup_main()
 {
@@ -381,6 +516,7 @@ void setup_main()
 
     pthread_mutex_init(&dynamic_lock, NULL);
     pthread_cond_init(&dynamic_cond, NULL);
+    sem_init(&fuel_pump_semaphore, 0, number_of_fuel_pumps);
 
 #ifdef DEBUG_
     print_thread_stack_size_info();
@@ -394,41 +530,15 @@ void setup_main()
 #endif
 }
 
-void init_attributes_with_min_stack_size(pthread_attr_t *attributes_p)
+void clean_up_main(Car *cars, Tanker *tankers)
 {
-    int init_result = pthread_attr_init(attributes_p);
-    if (init_result != 0)
-    {
-        switch (init_result)
-        {
-        case EINVAL:
-        {
-            print_debug("Invalid settings for thread attributes (EINVAL).\n");
-            break;
-        }
-        default:
-        {
-            print_debug("Unknown error initializing pthread attributes: %s\n", strerror(init_result));
-            break;
-        }
-        }
-    }
+    pthread_mutex_destroy(&dynamic_lock);
+    pthread_cond_destroy(&dynamic_cond);
+    sem_destroy(&fuel_pump_semaphore);
 
-    int setstacksize_result = pthread_attr_setstacksize(attributes_p, PTHREAD_STACK_MIN * 2);
-    if (setstacksize_result != 0)
-    {
-        switch (setstacksize_result)
-        {
-        case EINVAL:
-        {
-            print_debug("Invalid stack size (EINVAL). The stack size is too small or too large.\n");
-            break;
-        }
-        default:
-        {
-            print_debug("Unknown error setting stack size: %s\n", strerror(setstacksize_result));
-            break;
-        }
-        }
-    }
+    print_statistics(cars, tankers);
+
+#ifdef DEBUG_
+    print_total_simulation_time();
+#endif
 }

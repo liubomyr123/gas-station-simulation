@@ -8,6 +8,8 @@
 #include <sys/sysinfo.h>
 #include <time.h>
 #include <stdarg.h>
+#include <errno.h>
+#include <string.h>
 
 pthread_mutex_t log_lock = PTHREAD_MUTEX_INITIALIZER;
 time_t start_time = 0;
@@ -163,4 +165,43 @@ void print_total_simulation_time() {
     time_t end_time = time(NULL);
     double elapsed_time = difftime(end_time, start_time);
     print_debug("Total simulation time: %.2f seconds", elapsed_time);
+}
+
+void init_attributes_with_min_stack_size(pthread_attr_t *attributes_p)
+{
+    int init_result = pthread_attr_init(attributes_p);
+    if (init_result != 0)
+    {
+        switch (init_result)
+        {
+        case EINVAL:
+        {
+            print_debug("Invalid settings for thread attributes (EINVAL).\n");
+            break;
+        }
+        default:
+        {
+            print_debug("Unknown error initializing pthread attributes: %s\n", strerror(init_result));
+            break;
+        }
+        }
+    }
+
+    int setstacksize_result = pthread_attr_setstacksize(attributes_p, PTHREAD_STACK_MIN * 2);
+    if (setstacksize_result != 0)
+    {
+        switch (setstacksize_result)
+        {
+        case EINVAL:
+        {
+            print_debug("Invalid stack size (EINVAL). The stack size is too small or too large.\n");
+            break;
+        }
+        default:
+        {
+            print_debug("Unknown error setting stack size: %s\n", strerror(setstacksize_result));
+            break;
+        }
+        }
+    }
 }
