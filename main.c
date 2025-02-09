@@ -214,6 +214,7 @@ int main()
         cars[i].number = car_id;
         cars[i].waiting_time = 0;
         cars[i].fuel_required = 30;
+        cars[i].is_left_without_fuel = false;
 
         pthread_attr_t attributes;
         init_attributes_with_min_stack_size(&attributes);
