@@ -1,4 +1,5 @@
 # Gas Station Simulation
+## [Outdated, documentation in progress]
 
 ## Overview
 This project simulates a gas station where different types of vehicles arrive to refuel. The simulation includes queue management, fuel consumption tracking, and various optimization strategies for prioritizing vehicles. The project is designed to run on Linux-based systems.
