@@ -1,0 +1,176 @@
+JSON File Requirements for the Program:
+
+This file contains information about its fields that will define the program's behavior.
+
+1) fuel_pumps_count - The number of fuel pumps available for vehicles to refuel.
+    Required field.
+2) initial_fuel_in_tanker - The amount of fuel that the tanker will carry before unloading it into the station’s storage.
+    Required field.
+3) fuel_transfer_rate - The amount of fuel that the tanker will transfer to the station’s storage in one go.
+    Required field.
+4) vehicles - An array of vehicles arriving at the station to refuel. 
+    Required field.
+5) max_vehicle_capacity: The maximum number of vehicles the simulation will process. 
+    If the number of vehicles exceeds this value, the program will randomly select this number of vehicles and display a warning.
+    Optional field.
+
+The vehicles array will contain three types of vehicles:
+    - auto
+    - van
+    - truck
+
+The array must contain at least one vehicle type.
+If multiple objects of the same vehicle type exist, they will be merged.
+Each object will represent information about a vehicle type.
+
+The object will contain the following fields:
+    - vehicle_type: Specifies the vehicle type (auto/van/truck).
+        Required field. If missing, the object will be ignored.
+
+    - default_fuel_needed:  The default amount of fuel each vehicle will consume.
+        Required field. If missing, the object will be ignored.
+
+    - default_wait_time_sec: The time (in seconds) that a vehicle is willing to wait at the station for fuel.
+        Required field. If missing, the object will be ignored.
+
+    - default_count: The number of vehicles of this type.
+        Required field. If missing, the object will be ignored.
+
+    - custom_waiting_list: An array of objects containing specific vehicle settings.
+        Each object will include the following fields:
+            а) wait_time_sec: Time the vehicle is willing to wait.
+            b) fuel_needed: Amount of fuel the vehicle needs.
+            c) count: The number of vehicles with these settings.
+                
+        count field is required. If missing, the object will be ignored.
+
+        Each object can contain either fuel_needed, wait_time_sec, or both.
+        If count and fuel_needed are provided, default_wait_time_sec is used.
+        If count and wait_time_sec are provided, default_fuel_needed is used.
+        
+        If custom_waiting_list is missing, the program will use:
+            - fuel_needed_default
+            - default_wait_time_sec
+            - default_count
+
+    - randomize_arrival: A boolean field indicating whether vehicle arrivals should be randomized.
+        Optional field.
+
+        false → Vehicles arrive in the defined order.
+        true → Vehicles will arrive in a random order.
+
+        If custom_waiting_list has different vehicle configurations, they will be randomly selected.
+        If missing, the default behavior is false.
+        If multiple objects of the same vehicle type exist and at least one has "randomize_arrival": true, all vehicles will be shuffled.
+        
+        default_fuel_needed, default_wait_time_sec, and default_count will apply to each object separately.
+
+        Example of vehicles to merge:
+        {
+            "type": "auto",
+            "fuel_needed_default": 12,
+            "randomize_arrival": true,
+            "default_wait_time_sec": 6,
+            "default_count": 5
+        },
+        {
+            "type": "auto",
+            "fuel_needed_default": 10,
+            "randomize_arrival": false,
+            "default_wait_time_sec": 4,
+            "default_count": 5,
+            "custom_waiting_list": [
+                {
+                    "wait_time_sec": 2,
+                    "fuel_needed": 5,
+                    "count": 1
+                },
+                {
+                    "fuel_needed": 15,
+                    "count": 3
+                }
+            ]
+        },
+
+        Merging result: 
+        {
+            "randomize_arrival": true,
+            "vehicles": [
+                {
+                    "type": "auto",
+                    "fuel_needed": 12,
+                    "wait_time_sec": 6,
+                    "count": 5
+                },
+                {
+                    "type": "auto",
+                    "fuel_needed": 5,
+                    "wait_time_sec": 2,
+                    "count": 1
+                },
+                {
+                    "type": "auto",
+                    "fuel_needed": 15,
+                    "wait_time_sec": 4,
+                    "count": 3
+                },
+            ]
+        }
+
+JSON File Requirements for Statistics
+
+The file will store the execution results of the program.
+
+1) gas_station_stats
+    - total_fuel_consumed: The total amount of fuel consumed by all vehicles.
+    - total_serviced_vehicles: The total number of vehicles that were refueled.
+    - remaining_fuel_in_storage: The remaining amount of fuel after all vehicles were serviced.
+
+2) vehicles_stats
+    - total_vehicles_in_queue: The total number of vehicles that arrived at the station.
+    - average_wait_time_sec: The average waiting time for all vehicles.
+    - average_fuel_required_per_vehicle: The average amount of fuel requested per vehicle.
+    - average_fuel_consumed_per_vehicle: The average amount of fuel actually consumed per vehicle.
+
+    - stats_per_vehicle: An array containing results for each individual vehicle:
+        a) vehicle_type: The type of vehicle (auto/van/truck).
+        b) fuel_required: The amount of fuel the vehicle needed.
+        c) fuel_received: The actual amount of fuel the vehicle received.
+        d) wait_time_sec: The time (in seconds) the vehicle waited for fuel.
+
+    - stats_per_vehicle_type: An array of statistics grouped by vehicle type. Each object contains:
+        a) vehicle_type: The type of vehicle (auto/van/truck).
+        b) total_serviced_cars: The number of serviced vehicles of this type.
+        c) total_fuel_consumed_by_all_cars: The total amount of fuel consumed by all vehicles of this type.
+        d) total_fuel_required_by_all_cars: The total amount of fuel requested by all vehicles of this type.
+        e) total_wait_time_sec: The total waiting time (in seconds) for all vehicles of this type.
+
+3) tanker_stats
+    - total_refuels: The number of times the tanker refilled the station’s fuel storage.
+    - fuel_per_refuel: The amount of fuel the tanker transferred per refuel.
+    - total_refuel_time_sec: The total time (in seconds) the tanker spent refueling the station.
+
+
+
+
+
+Step 1:
+    Load the data.json file.
+
+Step 2:
+    Validate the presence of all required fields.
+
+Step 3:
+    Parse the data.
+
+Step 4:
+    If all required fields are present, transform the data into code.
+
+Step 5:
+    Start the simulation.
+
+Step 6:
+    Once the simulation ends, collect statistics.
+
+Step 7:
+    Save the statistics to a separate file: statistics.json.

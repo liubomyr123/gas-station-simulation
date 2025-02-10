@@ -1,0 +1,67 @@
+{
+    "gas_station_stats": {
+        "total_fuel_consumed": 240,
+        "total_serviced_vehicles": 4,
+        "remaining_fuel_in_storage": 10
+    },
+    "vehicles_stats": {
+        "total_vehicles_in_queue": 6,
+        "average_wait_time_sec": 12.5,
+        "average_fuel_required_per_vehicle": 25,
+        "average_fuel_consumed_per_vehicle": 16.5,
+        "stats_per_vehicle_type": [
+            {
+                "vehicle_type": "auto",
+                "total_serviced_cars": 12,
+                "total_fuel_consumed_by_all_cars": 240,
+                "total_fuel_required_by_all_cars": 180,
+                "total_wait_time_sec": 13
+            },
+            {
+                "vehicle_type": "truck",
+                "total_serviced_cars": 5,
+                "total_fuel_consumed_by_all_cars": 140,
+                "total_fuel_required_by_all_cars": 100,
+                "total_wait_time_sec": 13
+            },
+            {
+                "vehicle_type": "van",
+                "total_serviced_cars": 0,
+                "total_fuel_consumed_by_all_cars": 0,
+                "total_fuel_required_by_all_cars": 0,
+                "total_wait_time_sec": 0
+            }
+        ],
+        "stats_per_vehicle": [
+            {
+                "vehicle_type": "auto",
+                "fuel_required": 15,
+                "fuel_received": 15,
+                "wait_time_sec": 5
+            },
+            {
+                "vehicle_type": "auto",
+                "fuel_required": 25,
+                "fuel_received": 0,
+                "wait_time_sec": 17
+            },
+            {
+                "vehicle_type": "truck",
+                "fuel_required": 35,
+                "fuel_received": 35,
+                "wait_time_sec": 12
+            },
+            {
+                "vehicle_type": "truck",
+                "fuel_required": 40,
+                "fuel_received": 0,
+                "wait_time_sec": 4
+            }
+        ]
+    },
+    "tanker_stats": {
+        "total_refuels": 4,
+        "fuel_per_refuel": 20,
+        "total_refuel_time_sec": 20
+    }
+}
