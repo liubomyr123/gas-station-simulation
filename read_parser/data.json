@@ -26,6 +26,11 @@
                 {
                     "fuel_needed": 15,
                     "count": 3
+                },
+                {
+                    "wait_time_sec": -1,
+                    "fuel_needed": 20,
+                    "count": 1
                 }
             ]
         },
@@ -33,7 +38,7 @@
             "vehicle_type": "truck",
             "default_fuel_needed": 30,
             "default_wait_time_sec": 5,
-            "default_count": 0
+            "default_count": 2
         },
         {
             "vehicle_type": "van",

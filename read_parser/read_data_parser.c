@@ -2,16 +2,12 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <string.h>
+#include <time.h>
+#include <stdbool.h>
 
 #include "cjson/cJSON.h"
 
-typedef enum
-{
-    NOT_FOUND,
-    CORRECT_VALUE,
-    WRONG_TYPE,
-    UNKNOWN_ERROR,
-} StatusType;
+#define MAX_VEHICLES 100
 
 typedef enum
 {
@@ -20,6 +16,36 @@ typedef enum
     VEHICLE_VAN,
     VEHICLE_NOT_FOUND,
 } VehicleType;
+
+typedef struct
+{
+    int id;
+    VehicleType vehicle_type;
+    int wait_time_sec;
+    int fuel_needed;
+    time_t start_wait_time_sec;
+    time_t end_wait_time_sec;
+    bool is_left_without_fuel;
+} Car;
+
+typedef struct
+{
+    int fuel_pumps_count;
+    int max_vehicle_capacity;
+    int initial_fuel_in_tanker;
+    int fuel_transfer_rate;
+    int current_vehicle_capacity;
+    Car *vehicles;
+} UserJsonResult;
+
+typedef enum
+{
+    NOT_FOUND,
+    CORRECT_VALUE,
+    WRONG_TYPE,
+    UNKNOWN_ERROR,
+    ALLOCATION_ERROR
+} StatusType;
 
 int get_file_size(FILE *fp)
 {
@@ -61,7 +87,7 @@ StatusType get_file_buffer(char **buffer)
     {
         printf("Unable to allocate memory for file buffer\n");
         fclose(fp);
-        return UNKNOWN_ERROR;
+        return ALLOCATION_ERROR;
     }
     size_t number_of_bytes_transferred = fread((*buffer), 1, size, fp);
     if (number_of_bytes_transferred != size)
@@ -85,7 +111,7 @@ StatusType parse_file_buffer(cJSON **json, char **buffer)
         {
             printf("Error: %s\n", error_ptr);
         }
-        cJSON_Delete(*json);
+        // cJSON_Delete(*json);
         return UNKNOWN_ERROR;
     }
     return CORRECT_VALUE;
@@ -121,6 +147,9 @@ StatusType get_string_value(cJSON *json, char **result, char *name)
     size_t string_length = strlen(string_value_p->valuestring);
 
     *result = (char *)malloc(string_length * sizeof(char));
+    if (*result == NULL) {
+        return ALLOCATION_ERROR;
+    }
     strcpy(*result, string_value_p->valuestring);
 
     return CORRECT_VALUE;
@@ -171,6 +200,10 @@ VehicleType get_vehicle_type(cJSON *vehicle_p)
 
     char *vehicle_type = NULL;
     StatusType vehicle_type_result = get_string_value(vehicle_p, &vehicle_type, "vehicle_type");
+    if (vehicle_type_result == ALLOCATION_ERROR)
+    {
+        printf("❌ [vehicle_type] unable to allocate memory\n");
+    }
     if (vehicle_type_result == NOT_FOUND)
     {
         printf("❌ [vehicle_type] was not found\n");
@@ -273,7 +306,7 @@ StatusType get_custom_waiting_list(cJSON *json)
     return CORRECT_VALUE;
 }
 
-StatusType get_vehicles(cJSON *json)
+StatusType get_vehicles(cJSON *json, UserJsonResult *json_result)
 {
     cJSON *vehicles_array_p = NULL;
     StatusType vehicles_array_result = get_array_value(json, (void **)&vehicles_array_p, "vehicles");
@@ -288,6 +321,14 @@ StatusType get_vehicles(cJSON *json)
 
     printf("\n");
     printf("✅ [vehicles] length: %d\n", cJSON_GetArraySize(vehicles_array_p));
+    
+    Car *vehicles = (Car *)malloc(json_result->max_vehicle_capacity * sizeof(Car));
+    if (vehicles == NULL) {
+        printf("❌ Unable to allocate memory for vehicles\n");
+        return ALLOCATION_ERROR;
+    }
+
+    int current_vehicle_capacity = 0;
 
     cJSON *vehicle_p = NULL;
     cJSON_ArrayForEach(vehicle_p, vehicles_array_p)
@@ -386,6 +427,9 @@ StatusType get_vehicles(cJSON *json)
             continue;
         }
 
+        if (custom_waiting_list_result == NOT_FOUND) {
+            current_vehicle_capacity += default_count;
+        }
         printf("---------------------------------------------Level 1: END\n");
         printf("\n");
         printf("\n");
@@ -397,21 +441,56 @@ StatusType get_vehicles(cJSON *json)
     return CORRECT_VALUE;
 }
 
+void print_json_result(UserJsonResult *json_result)
+{
+    printf("Data from user:\n");
+    printf("✅ [fuel_pumps_count]: %d\n", json_result->fuel_pumps_count);
+    printf("✅ [initial_fuel_in_tanker]: %d\n", json_result->initial_fuel_in_tanker);
+    printf("✅ [fuel_transfer_rate]: %d\n", json_result->fuel_transfer_rate);
+    printf("✅ [max_vehicle_capacity]: %d\n", json_result->max_vehicle_capacity);
+}
+
+char *buffer = NULL;
+cJSON *json = NULL;
+
+void clean_up() {
+    printf("\nCleaning up...\n");
+    if (buffer != NULL) {
+        free(buffer);
+        printf("Cleaned buffer\n");
+    }
+    if (json != NULL) {
+        cJSON_Delete(json);
+        printf("Cleaned json\n");
+    }
+}
+
 int main()
 {
-    char *buffer = NULL;
+    atexit(clean_up);
     StatusType get_file_buffer_result = get_file_buffer(&buffer);
+    if (get_file_buffer_result == ALLOCATION_ERROR)
+    {
+        printf("❌ Unable to allocate memory for buffer\n");
+        return 1;
+    }
     if (get_file_buffer_result == UNKNOWN_ERROR)
     {
         printf("❌ Unable to get file buffer\n");
         return 1;
     }
 
-    cJSON *json = NULL;
     StatusType parse_file_buffer_result = parse_file_buffer(&json, &buffer);
     if (parse_file_buffer_result == UNKNOWN_ERROR)
     {
         printf("❌ Unable to parse file buffer\n");
+        return 1;
+    }
+
+    UserJsonResult *json_result = (UserJsonResult *)malloc(sizeof(UserJsonResult));
+    if (json_result == NULL)
+    {
+        printf("❌ Unable to allocate memory for json_result\n");
         return 1;
     }
 
@@ -420,14 +499,17 @@ int main()
     if (fuel_pumps_count_result == NOT_FOUND)
     {
         printf("❌ [fuel_pumps_count] was not found\n");
+        return 1;
     }
     else if (fuel_pumps_count_result == WRONG_TYPE)
     {
         printf("❌ [fuel_pumps_count] is not number\n");
+        return 1;
     }
     else
     {
-        printf("✅ [fuel_pumps_count]: %d\n", fuel_pumps_count);
+        // printf("✅ [fuel_pumps_count]: %d\n", fuel_pumps_count);
+        json_result->fuel_pumps_count = fuel_pumps_count;
     }
 
     int max_vehicle_capacity = 0;
@@ -435,14 +517,22 @@ int main()
     if (max_vehicle_capacity_result == NOT_FOUND)
     {
         printf("❌ [max_vehicle_capacity] was not found\n");
+        return 1;
     }
     else if (max_vehicle_capacity_result == WRONG_TYPE)
     {
         printf("❌ [max_vehicle_capacity] is not number\n");
+        return 1;
+    }
+    else if (max_vehicle_capacity > MAX_VEHICLES)
+    {
+        printf("❌ [max_vehicle_capacity] can not be bigger than %d\n", MAX_VEHICLES);
+        return 1;
     }
     else
     {
-        printf("✅ [max_vehicle_capacity]: %d\n", max_vehicle_capacity);
+        // printf("✅ [max_vehicle_capacity]: %d\n", max_vehicle_capacity);
+        json_result->max_vehicle_capacity = max_vehicle_capacity;
     }
 
     int initial_fuel_in_tanker = 0;
@@ -450,14 +540,17 @@ int main()
     if (initial_fuel_in_tanker_result == NOT_FOUND)
     {
         printf("❌ [initial_fuel_in_tanker] was not found\n");
+        return 1;
     }
     else if (initial_fuel_in_tanker_result == WRONG_TYPE)
     {
         printf("❌ [initial_fuel_in_tanker] is not number\n");
+        return 1;
     }
     else
     {
-        printf("✅ [initial_fuel_in_tanker]: %d\n", initial_fuel_in_tanker);
+        // printf("✅ [initial_fuel_in_tanker]: %d\n", initial_fuel_in_tanker);
+        json_result->initial_fuel_in_tanker = initial_fuel_in_tanker;
     }
 
     int fuel_transfer_rate = 0;
@@ -465,27 +558,37 @@ int main()
     if (fuel_transfer_rate_result == NOT_FOUND)
     {
         printf("❌ [fuel_transfer_rate] was not found\n");
+        return 1;
     }
     else if (fuel_transfer_rate_result == WRONG_TYPE)
     {
         printf("❌ [fuel_transfer_rate] is not number\n");
+        return 1;
     }
     else
     {
-        printf("✅ [fuel_transfer_rate]: %d\n", fuel_transfer_rate);
+        // printf("✅ [fuel_transfer_rate]: %d\n", fuel_transfer_rate);
+        json_result->fuel_transfer_rate = fuel_transfer_rate;
     }
 
-    StatusType vehicles_result = get_vehicles(json);
+    StatusType vehicles_result = get_vehicles(json, json_result);
+    if (vehicles_result == ALLOCATION_ERROR)
+    {
+        printf("❌ [vehicles] unable to allocate memory\n");
+        return 1;
+    }
     if (vehicles_result == NOT_FOUND)
     {
         printf("❌ [vehicles] was not found\n");
+        return 1;
     }
     else if (vehicles_result == WRONG_TYPE)
     {
         printf("❌ [vehicles] is not array\n");
+        return 1;
     }
 
-    cJSON_Delete(json);
-    free(buffer);
+    print_json_result(json_result);
+
     return 0;
 }
