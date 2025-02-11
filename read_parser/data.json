@@ -41,6 +41,13 @@
             "default_count": 2
         },
         {
+            "vehicle_type": "truck",
+            "default_fuel_needed": 25,
+            "default_wait_time_sec": 8,
+            "default_count": 4,
+            "custom_waiting_list": []
+        },
+        {
             "vehicle_type": "van",
             "default_fuel_needed": 15,
             "randomize_arrival": true,

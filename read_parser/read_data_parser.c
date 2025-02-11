@@ -19,13 +19,9 @@ typedef enum
 
 typedef struct
 {
-    int id;
     VehicleType vehicle_type;
     int wait_time_sec;
     int fuel_needed;
-    time_t start_wait_time_sec;
-    time_t end_wait_time_sec;
-    bool is_left_without_fuel;
 } Car;
 
 typedef struct
@@ -44,6 +40,7 @@ typedef enum
     CORRECT_VALUE,
     WRONG_TYPE,
     UNKNOWN_ERROR,
+    EMPTY_VALUE,
     ALLOCATION_ERROR
 } StatusType;
 
@@ -147,7 +144,8 @@ StatusType get_string_value(cJSON *json, char **result, char *name)
     size_t string_length = strlen(string_value_p->valuestring);
 
     *result = (char *)malloc(string_length * sizeof(char));
-    if (*result == NULL) {
+    if (*result == NULL)
+    {
         return ALLOCATION_ERROR;
     }
     strcpy(*result, string_value_p->valuestring);
@@ -232,8 +230,16 @@ VehicleType get_vehicle_type(cJSON *vehicle_p)
     return result_status;
 }
 
-StatusType get_custom_waiting_list(cJSON *json)
+StatusType get_custom_waiting_list(
+    cJSON *json,
+    VehicleType vehicle_type,
+    int default_wait_time_sec,
+    int default_fuel_needed)
 {
+    if (vehicle_type == VEHICLE_NOT_FOUND)
+    {
+        return UNKNOWN_ERROR;
+    }
     cJSON *custom_waiting_list_p = NULL;
     StatusType custom_waiting_list_result = get_array_value(json, (void **)&custom_waiting_list_p, "custom_waiting_list");
     if (custom_waiting_list_result == NOT_FOUND)
@@ -245,8 +251,14 @@ StatusType get_custom_waiting_list(cJSON *json)
         return WRONG_TYPE;
     }
 
+    int custom_waiting_list_length = cJSON_GetArraySize(custom_waiting_list_p);
+    if (custom_waiting_list_length == 0)
+    {
+        return EMPTY_VALUE;
+    }
+
     printf("\n");
-    printf("✅ [custom_waiting_list] length: %d\n", cJSON_GetArraySize(custom_waiting_list_p));
+    printf("✅ [custom_waiting_list] length: %d\n", custom_waiting_list_length);
 
     cJSON *custom_waiting_list_item_p = NULL;
     cJSON_ArrayForEach(custom_waiting_list_item_p, custom_waiting_list_p)
@@ -319,16 +331,20 @@ StatusType get_vehicles(cJSON *json, UserJsonResult *json_result)
         return WRONG_TYPE;
     }
 
+    int vehicle_length = cJSON_GetArraySize(vehicles_array_p);
+    if (vehicle_length == 0)
+    {
+        return EMPTY_VALUE;
+    }
     printf("\n");
-    printf("✅ [vehicles] length: %d\n", cJSON_GetArraySize(vehicles_array_p));
-    
+    printf("✅ [vehicles] length: %d\n", vehicle_length);
+
     Car *vehicles = (Car *)malloc(json_result->max_vehicle_capacity * sizeof(Car));
-    if (vehicles == NULL) {
+    if (vehicles == NULL)
+    {
         printf("❌ Unable to allocate memory for vehicles\n");
         return ALLOCATION_ERROR;
     }
-
-    int current_vehicle_capacity = 0;
 
     cJSON *vehicle_p = NULL;
     cJSON_ArrayForEach(vehicle_p, vehicles_array_p)
@@ -416,7 +432,16 @@ StatusType get_vehicles(cJSON *json, UserJsonResult *json_result)
             printf("✅ [randomize_arrival]: %d\n", randomize_arrival);
         }
 
-        StatusType custom_waiting_list_result = get_custom_waiting_list(vehicle_p);
+        StatusType custom_waiting_list_result = get_custom_waiting_list(
+            vehicle_p,
+            vehicle_type,
+            default_wait_time_sec,
+            default_fuel_needed);
+
+        if (custom_waiting_list_result == EMPTY_VALUE)
+        {
+            printf("❌ [custom_waiting_list] is empty\n");
+        }
         if (custom_waiting_list_result == NOT_FOUND)
         {
             printf("❌ [custom_waiting_list] was not found\n");
@@ -427,9 +452,6 @@ StatusType get_vehicles(cJSON *json, UserJsonResult *json_result)
             continue;
         }
 
-        if (custom_waiting_list_result == NOT_FOUND) {
-            current_vehicle_capacity += default_count;
-        }
         printf("---------------------------------------------Level 1: END\n");
         printf("\n");
         printf("\n");
@@ -453,13 +475,16 @@ void print_json_result(UserJsonResult *json_result)
 char *buffer = NULL;
 cJSON *json = NULL;
 
-void clean_up() {
+void clean_up()
+{
     printf("\nCleaning up...\n");
-    if (buffer != NULL) {
+    if (buffer != NULL)
+    {
         free(buffer);
         printf("Cleaned buffer\n");
     }
-    if (json != NULL) {
+    if (json != NULL)
+    {
         cJSON_Delete(json);
         printf("Cleaned json\n");
     }
@@ -572,6 +597,11 @@ int main()
     }
 
     StatusType vehicles_result = get_vehicles(json, json_result);
+    if (vehicles_result == EMPTY_VALUE)
+    {
+        printf("❌ [vehicles] is empty\n");
+        return 1;
+    }
     if (vehicles_result == ALLOCATION_ERROR)
     {
         printf("❌ [vehicles] unable to allocate memory\n");
