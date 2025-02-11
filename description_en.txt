@@ -31,6 +31,7 @@ The object will contain the following fields:
         Required field. If missing, the object will be ignored.
 
     - default_wait_time_sec: The time (in seconds) that a vehicle is willing to wait at the station for fuel.
+        If the field is equal to -1, it means that the machine is waiting for no limit.
         Required field. If missing, the object will be ignored.
 
     - default_count: The number of vehicles of this type.
@@ -38,7 +39,7 @@ The object will contain the following fields:
 
     - custom_waiting_list: An array of objects containing specific vehicle settings.
         Each object will include the following fields:
-            а) wait_time_sec: Time the vehicle is willing to wait.
+            а) wait_time_sec: Time the vehicle is willing to wait. If the field is equal to -1, it means that the machine is waiting for no limit.
             b) fuel_needed: Amount of fuel the vehicle needs.
             c) count: The number of vehicles with these settings.
                 
@@ -88,7 +89,12 @@ The object will contain the following fields:
                 {
                     "fuel_needed": 15,
                     "count": 3
-                }
+                },
+                {
+                    "wait_time_sec": -1,
+                    "fuel_needed": 20,
+                    "count": 1
+                },
             ]
         },
 
@@ -113,6 +119,12 @@ The object will contain the following fields:
                     "fuel_needed": 15,
                     "wait_time_sec": 4,
                     "count": 3
+                },
+                {
+                    "type": "auto",
+                    "fuel_needed": 20,
+                    "wait_time_sec": -1,
+                    "count": 1
                 },
             ]
         }
