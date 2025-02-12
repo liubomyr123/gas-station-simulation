@@ -86,7 +86,7 @@ StatusType get_file_buffer(char **buffer)
         return UNKNOWN_ERROR;
     }
 
-    (*buffer) = (char *)malloc(size * sizeof(char));
+    (*buffer) = (char *)malloc((size + 1) * sizeof(char));
     if ((*buffer) == NULL)
     {
         printf("Unable to allocate memory for file buffer\n");
@@ -97,9 +97,13 @@ StatusType get_file_buffer(char **buffer)
     if (number_of_bytes_transferred != size)
     {
         printf("Expected to read %d bytes, but read only %ld bytes\n", size, number_of_bytes_transferred);
+        // free(*buffer);
         fclose(fp);
         return UNKNOWN_ERROR;
     }
+
+    // malloc will allocate size + 1 for '\n', and we need to add this '\0' at the end 
+    (*buffer)[size] = '\0';
     fclose(fp);
 
     return CORRECT_VALUE;
@@ -150,7 +154,8 @@ StatusType get_string_value(cJSON *json, char **result, char *name)
     }
     size_t string_length = strlen(string_value_p->valuestring);
 
-    *result = (char *)malloc(string_length * sizeof(char));
+    // malloc will allocate only string_length, but we need to add '\0' at the end 
+    *result = (char *)malloc((string_length + 1) * sizeof(char));
     if (*result == NULL)
     {
         return ALLOCATION_ERROR;
@@ -1047,6 +1052,7 @@ void clean_up()
     if (buffer != NULL)
     {
         free(buffer);
+        buffer = NULL;
         printf("Cleaned buffer\n");
     }
     if (json != NULL)
@@ -1058,7 +1064,159 @@ void clean_up()
 
 void randomize_vehicles(UserJsonResult *json_result)
 {
-    printf("\nProgram will use %d cars...\n", json_result->result_vehicles_length);
+    printf("Program running randomizes...\n");
+    srand(time(NULL));
+    // printf("\nProgram will use %d cars...\n", json_result->result_vehicles_length);
+    json_result->result_vehicles = (Car **)malloc(json_result->result_vehicles_length * sizeof(Car));
+
+    // O(n*n) ❌ Custom solution
+    // const int length = 10;
+    // int array[length];
+    // for (int i = 0; i < length; array[i] = -1, i++)
+    //     ;
+    // for (int i = 0; i < length; i++)
+    // {
+    //     _Bool flag = 0;
+    //     while (flag == 0)
+    //     {
+    //         int rand_value = rand() % length;
+    //         _Bool match = 0;
+    //         for (int j = 0; j < length; j++)
+    //         {
+    //             if (array[j] == rand_value)
+    //             {
+    //                 match = 1;
+    //                 break;
+    //             }
+    //         }
+    //         if (match == 0)
+    //         {
+    //             array[i] = rand_value;
+    //             flag = 1;
+    //         }
+    //         if (match == 1)
+    //         {
+    //             int new_rand_value = rand() % length;
+    //             if (new_rand_value == rand_value)
+    //             {
+    //                 continue;
+    //             }
+    //         }
+    //     }
+    // }
+
+    // O(n) ✅ Fisher-Yates Shuffle
+    // const int length = 10;
+    // int array[length];
+    // for (int i = 0; i < length; array[i] = i, i++)
+    //     ;
+    // for (int i = length - 1; i >= 0; i--)
+    // {
+    //     int j = rand() % (i + 1);
+    //     int temp = array[i];
+    //     array[i] = array[j];
+    //     array[j] = temp;
+    // }
+
+    // printf("Bigger length: %d\n", json_result->all_vehicles_length);
+    // printf("Less length: %d\n", json_result->result_vehicles_length);
+
+    const int bigger_length = json_result->all_vehicles_length;
+    const int result_length = json_result->result_vehicles_length;
+
+    // const int bigger_length = 7;
+    // const int result_length = 5;
+
+    if (bigger_length < result_length)
+    {
+        printf("Max vehicle array length is less current\n");
+        return;
+    }
+
+    _Bool is_equal = bigger_length == result_length;
+
+    int bigger_array[bigger_length];
+    int result_array[result_length];
+
+    for (int i = 0; i < bigger_length; bigger_array[i] = i, i++)
+        ;
+
+    for (int i = bigger_length - 1; i >= 0; i--)
+    {
+        int j = rand() % (i + 1);
+        int temp = bigger_array[i];
+        bigger_array[i] = bigger_array[j];
+        bigger_array[j] = temp;
+    }
+
+    if (!is_equal)
+    {
+        // printf("NOT is_equal\n");
+        for (int i = 0; i < result_length; i++)
+        {
+            result_array[i] = bigger_array[i];
+        }
+    }
+
+    // printf("------------------\n");
+
+    for (int j = 0; j < result_length; j++)
+    {
+        int index = !is_equal ? result_array[j] : bigger_array[j];
+
+        // printf("j[%d]; index: [%d]\n", j, index);
+        json_result->result_vehicles[j] = json_result->all_vehicles[index];
+    }
+
+    // printf("\n");
+    // printf("List of valid cars:\n");
+    // for (int i = 0; i < json_result->result_vehicles_length; i++)
+    // {
+    //     if (json_result->result_vehicles[i]->vehicle_type == VEHICLE_VAN)
+    //     {
+    //         printf("🚙 #%d:\n", i + 1);
+    //     }
+    //     if (json_result->result_vehicles[i]->vehicle_type == VEHICLE_TRUCK)
+    //     {
+    //         printf("🚛 #%d:\n", i + 1);
+    //     }
+    //     if (json_result->result_vehicles[i]->vehicle_type == VEHICLE_AUTO)
+    //     {
+    //         printf("🚗 #%d:\n", i + 1);
+    //     }
+    //     printf("------------------------------\n");
+    //     printf("🛢️  fuel_needed: %d liters\n", json_result->result_vehicles[i]->fuel_needed);
+    //     printf("⏳ wait_time_sec: %d seconds\n", json_result->result_vehicles[i]->wait_time_sec);
+    //     printf("------------------------------\n");
+    //     printf("\n");
+    // }
+}
+
+void clean_up_json_result(UserJsonResult *json_result)
+{
+    if (json_result == NULL)
+    {
+        return;
+    }
+    if (json_result->all_vehicles != NULL)
+    {
+        for (int i = 0; i < json_result->all_vehicles_length; i++)
+        {
+            if (json_result->all_vehicles[i] != NULL)
+            {
+                free(json_result->all_vehicles[i]);
+                json_result->all_vehicles[i] = NULL;
+            }
+        }
+
+        free(json_result->all_vehicles);
+    }
+    if (json_result->result_vehicles != NULL)
+    {
+        free(json_result->result_vehicles);
+    }
+    free(json_result);
+    printf("Cleaning results finished\n");
 }
 
 int main()
@@ -1089,17 +1247,21 @@ int main()
         printf("❌ Unable to allocate memory for json_result\n");
         return 1;
     }
+    json_result->all_vehicles = NULL;
+    json_result->result_vehicles = NULL;
 
     int fuel_pumps_count = 0;
     StatusType fuel_pumps_count_result = get_int_value(json, &fuel_pumps_count, "fuel_pumps_count");
     if (fuel_pumps_count_result == NOT_FOUND)
     {
         printf("❌ [fuel_pumps_count] was not found\n");
+        clean_up_json_result(json_result);
         return 1;
     }
     else if (fuel_pumps_count_result == WRONG_TYPE)
     {
         printf("❌ [fuel_pumps_count] is not number\n");
+        clean_up_json_result(json_result);
         return 1;
     }
     else
@@ -1117,6 +1279,7 @@ int main()
     else if (randomize_arrival_result == WRONG_TYPE)
     {
         printf("❌ [randomize_arrival] is not boolean\n");
+        clean_up_json_result(json_result);
         return 1;
     }
     else
@@ -1130,16 +1293,19 @@ int main()
     if (max_vehicle_capacity_result == NOT_FOUND)
     {
         printf("❌ [max_vehicle_capacity] was not found\n");
+        clean_up_json_result(json_result);
         return 1;
     }
     else if (max_vehicle_capacity_result == WRONG_TYPE)
     {
         printf("❌ [max_vehicle_capacity] is not number\n");
+        clean_up_json_result(json_result);
         return 1;
     }
     else if (max_vehicle_capacity > MAX_VEHICLES)
     {
         printf("❌ [max_vehicle_capacity] can not be bigger than %d\n", MAX_VEHICLES);
+        clean_up_json_result(json_result);
         return 1;
     }
     else
@@ -1153,11 +1319,13 @@ int main()
     if (initial_fuel_in_tanker_result == NOT_FOUND)
     {
         printf("❌ [initial_fuel_in_tanker] was not found\n");
+        clean_up_json_result(json_result);
         return 1;
     }
     else if (initial_fuel_in_tanker_result == WRONG_TYPE)
     {
         printf("❌ [initial_fuel_in_tanker] is not number\n");
+        clean_up_json_result(json_result);
         return 1;
     }
     else
@@ -1171,11 +1339,13 @@ int main()
     if (fuel_transfer_rate_result == NOT_FOUND)
     {
         printf("❌ [fuel_transfer_rate] was not found\n");
+        clean_up_json_result(json_result);
         return 1;
     }
     else if (fuel_transfer_rate_result == WRONG_TYPE)
     {
         printf("❌ [fuel_transfer_rate] is not number\n");
+        clean_up_json_result(json_result);
         return 1;
     }
     else
@@ -1188,26 +1358,31 @@ int main()
     if (vehicles_result == EMPTY_VALUE)
     {
         printf("❌ [vehicles] is empty\n");
+        clean_up_json_result(json_result);
         return 1;
     }
     if (vehicles_result == EMPTY_VEHICLE_CAPACITY_VALUE)
     {
         printf("❌ [vehicles] does not have any valid cars\n");
+        clean_up_json_result(json_result);
         return 1;
     }
     if (vehicles_result == ALLOCATION_ERROR)
     {
         printf("❌ [vehicles] unable to allocate memory\n");
+        clean_up_json_result(json_result);
         return 1;
     }
     if (vehicles_result == NOT_FOUND)
     {
         printf("❌ [vehicles] was not found\n");
+        clean_up_json_result(json_result);
         return 1;
     }
     else if (vehicles_result == WRONG_TYPE)
     {
         printf("❌ [vehicles] is not array\n");
+        clean_up_json_result(json_result);
         return 1;
     }
 
@@ -1215,17 +1390,22 @@ int main()
     print_json_result(json_result);
 
     printf("\n");
+
+    printf("[vehicles] length of all vehicles: %d\n", json_result->all_vehicles_length);
+
+    printf("\n");
     if (json_result->all_vehicles_length > MAX_VEHICLES)
     {
         printf("❌ [vehicles] can not be bigger than [MAX_VEHICLES]: %d\n", MAX_VEHICLES);
     }
-    if (json_result->all_vehicles_length > max_vehicle_capacity)
+
+    _Bool is_overlap_vehicle_length = json_result->all_vehicles_length > max_vehicle_capacity;
+    if (is_overlap_vehicle_length)
     {
         printf("❌ [vehicles] can not be bigger than [max_vehicle_capacity]: %d\n", max_vehicle_capacity);
-        printf("❌ Program will select random %d cars...\n", max_vehicle_capacity);
         json_result->result_vehicles_length = max_vehicle_capacity;
     }
-    if (json_result->all_vehicles_length <= max_vehicle_capacity)
+    else
     {
         printf("✅ Program will use [vehicles]/[max_vehicle_capacity] cars: %d/%d\n",
                json_result->all_vehicles_length,
@@ -1233,6 +1413,46 @@ int main()
         json_result->result_vehicles_length = json_result->all_vehicles_length;
     }
 
-    randomize_vehicles(json_result);
+    printf("\n");
+    printf("[vehicles] length of result vehicles: %d\n", json_result->result_vehicles_length);
+    printf("\n");
+
+    if (randomize_arrival_result == NOT_FOUND)
+    {
+        // skip
+    }
+    else
+    {
+        if (randomize_arrival == 1)
+        {
+            if (is_overlap_vehicle_length)
+            {
+                printf("Program will random select %d vehicles...\n", json_result->result_vehicles_length);
+            }
+            else
+            {
+                printf("Program is going to randomize %d vehicles list...\n", json_result->result_vehicles_length);
+            }
+            randomize_vehicles(json_result);
+        }
+        else
+        {
+            if (is_overlap_vehicle_length)
+            {
+                printf("Program will random select %d vehicles...\n", json_result->result_vehicles_length);
+                randomize_vehicles(json_result);
+            }
+        }
+    }
+
+    clean_up_json_result(json_result);
     return 0;
 }
+
+// cd ./read_parser
+// make
+// valgrind --tool=memcheck --leak-check=full --track-origins=yes --show-leak-kinds=all -s ./read_data_parser
+
+// result: 
+// All heap blocks were freed -- no leaks are possible
+// ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
