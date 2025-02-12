@@ -8,6 +8,7 @@
         "stdlib.h": "c",
         "errno.h": "c",
         "time.h": "c",
-        "algorithm": "c"
+        "algorithm": "c",
+        "array": "c"
     }
 }

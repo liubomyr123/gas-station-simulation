@@ -1,7 +1,7 @@
 {
     "fuel_pumps_count": 3,
     "randomize_arrival": true,
-    "max_vehicle_capacity": 100,
+    "max_vehicle_capacity": 80,
     "initial_fuel_in_tanker": 500,
     "fuel_transfer_rate": 30,
     "vehicles": [
@@ -9,7 +9,7 @@
             "vehicle_type": "auto",
             "default_fuel_needed": 12,
             "default_wait_time_sec": 2,
-            "default_count": 5
+            "default_count": 20
         },
         {
             "vehicle_type": "auto",
