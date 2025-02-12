@@ -33,6 +33,7 @@ typedef struct
     int initial_fuel_in_tanker;
     int fuel_transfer_rate;
     int current_vehicle_capacity;
+    _Bool randomize_arrival;
     Car **vehicles;
 } UserJsonResult;
 
@@ -747,35 +748,6 @@ int get_default_count(cJSON *vehicle_p, int *default_count, _Bool show_logs)
     return 1;
 }
 
-int get_randomize_arrival(cJSON *vehicle_p, _Bool *randomize_arrival, _Bool show_logs)
-{
-    StatusType randomize_arrival_result = get_boolean_value(vehicle_p, randomize_arrival, "randomize_arrival");
-    if (randomize_arrival_result == NOT_FOUND)
-    {
-        if (show_logs)
-        {
-            printf("❓ [randomize_arrival] was not found\n");
-        }
-    }
-    else if (randomize_arrival_result == WRONG_TYPE)
-    {
-        if (show_logs)
-        {
-            printf("❌ [randomize_arrival] is not boolean\n");
-        }
-        return 0;
-    }
-    else
-    {
-        if (show_logs)
-        {
-            printf("✅ [randomize_arrival]: %d\n", *randomize_arrival);
-        }
-    }
-
-    return 1;
-}
-
 StatusType validate_vehicles(
     cJSON *vehicles_array_p,
     int *current_vehicle_capacity,
@@ -811,12 +783,6 @@ StatusType validate_vehicles(
 
         int default_count = 0;
         if (get_default_count(vehicle_p, &default_count, show_logs) == 0)
-        {
-            continue;
-        }
-
-        _Bool randomize_arrival = 0;
-        if (get_randomize_arrival(vehicle_p, &randomize_arrival, show_logs) == 0)
         {
             continue;
         }
@@ -926,7 +892,7 @@ StatusType get_vehicles(cJSON *json, UserJsonResult *json_result)
     printf("\n");
 
     printf("Total valid vehicles: %d\n", current_vehicle_capacity);
-    
+
     int count_added_vehicles = 0;
     json_result->vehicles = (Car **)malloc(current_vehicle_capacity * sizeof(Car));
     if (json_result->vehicles == NULL)
@@ -974,12 +940,6 @@ StatusType get_vehicles(cJSON *json, UserJsonResult *json_result)
 
         int default_count = 0;
         if (get_default_count(vehicle_p, &default_count, show_logs) == 0)
-        {
-            continue;
-        }
-
-        _Bool randomize_arrival = 0;
-        if (get_randomize_arrival(vehicle_p, &randomize_arrival, show_logs) == 0)
         {
             continue;
         }
@@ -1054,6 +1014,7 @@ void print_json_result(UserJsonResult *json_result)
     printf("✅ [initial_fuel_in_tanker]: %d\n", json_result->initial_fuel_in_tanker);
     printf("✅ [fuel_transfer_rate]: %d\n", json_result->fuel_transfer_rate);
     printf("✅ [max_vehicle_capacity]: %d\n", json_result->max_vehicle_capacity);
+    printf("✅ [randomize_arrival]: %s\n", json_result->randomize_arrival == 0 ? "false" : "true");
 
     printf("\n");
     printf("List of valid cars:\n");
@@ -1061,15 +1022,15 @@ void print_json_result(UserJsonResult *json_result)
     {
         if (json_result->vehicles[i]->vehicle_type == VEHICLE_VAN)
         {
-            printf("🚙 #%d:\n", i+1);
+            printf("🚙 #%d:\n", i + 1);
         }
         if (json_result->vehicles[i]->vehicle_type == VEHICLE_TRUCK)
         {
-            printf("🚛 #%d:\n", i+1);
+            printf("🚛 #%d:\n", i + 1);
         }
         if (json_result->vehicles[i]->vehicle_type == VEHICLE_AUTO)
         {
-            printf("🚗 #%d:\n", i+1);
+            printf("🚗 #%d:\n", i + 1);
         }
         printf("------------------------------\n");
         printf("🛢️  fuel_needed: %d liters\n", json_result->vehicles[i]->fuel_needed);
@@ -1142,6 +1103,23 @@ int main()
     {
         // printf("✅ [fuel_pumps_count]: %d\n", fuel_pumps_count);
         json_result->fuel_pumps_count = fuel_pumps_count;
+    }
+
+    _Bool randomize_arrival = 0;
+    StatusType randomize_arrival_result = get_boolean_value(json, &randomize_arrival, "randomize_arrival");
+    if (randomize_arrival_result == NOT_FOUND)
+    {
+        printf("❓ [randomize_arrival] was not found\n");
+    }
+    else if (randomize_arrival_result == WRONG_TYPE)
+    {
+        printf("❌ [randomize_arrival] is not boolean\n");
+        return 1;
+    }
+    else
+    {
+        // printf("✅ [randomize_arrival]: %d\n", randomize_arrival);
+        json_result->randomize_arrival = randomize_arrival;
     }
 
     int max_vehicle_capacity = 0;

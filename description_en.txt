@@ -13,6 +13,11 @@ This file contains information about its fields that will define the program's b
 5) max_vehicle_capacity: The maximum number of vehicles the simulation will process. 
     If the number of vehicles exceeds this value, the program will randomly select this number of vehicles and display a warning.
     Optional field.
+6) randomize_arrival - A boolean field indicating whether vehicle arrivals should be randomized.
+        false → Vehicles arrive in the defined order.
+        true → Vehicles will arrive in a random order.
+    If missing, the default behavior is false.
+    Optional field.
 
 The vehicles array will contain three types of vehicles:
     - auto
@@ -53,81 +58,6 @@ The object will contain the following fields:
             - fuel_needed_default
             - default_wait_time_sec
             - default_count
-
-    - randomize_arrival: A boolean field indicating whether vehicle arrivals should be randomized.
-        Optional field.
-
-        false → Vehicles arrive in the defined order.
-        true → Vehicles will arrive in a random order.
-
-        If custom_waiting_list has different vehicle configurations, they will be randomly selected.
-        If missing, the default behavior is false.
-        If multiple objects of the same vehicle type exist and at least one has "randomize_arrival": true, all vehicles will be shuffled.
-        
-        default_fuel_needed, default_wait_time_sec, and default_count will apply to each object separately.
-
-        Example of vehicles to merge:
-        {
-            "type": "auto",
-            "fuel_needed_default": 12,
-            "randomize_arrival": true,
-            "default_wait_time_sec": 6,
-            "default_count": 5
-        },
-        {
-            "type": "auto",
-            "fuel_needed_default": 10,
-            "randomize_arrival": false,
-            "default_wait_time_sec": 4,
-            "default_count": 5,
-            "custom_waiting_list": [
-                {
-                    "wait_time_sec": 2,
-                    "fuel_needed": 5,
-                    "count": 1
-                },
-                {
-                    "fuel_needed": 15,
-                    "count": 3
-                },
-                {
-                    "wait_time_sec": -1,
-                    "fuel_needed": 20,
-                    "count": 1
-                },
-            ]
-        },
-
-        Merging result: 
-        {
-            "randomize_arrival": true,
-            "vehicles": [
-                {
-                    "type": "auto",
-                    "fuel_needed": 12,
-                    "wait_time_sec": 6,
-                    "count": 5
-                },
-                {
-                    "type": "auto",
-                    "fuel_needed": 5,
-                    "wait_time_sec": 2,
-                    "count": 1
-                },
-                {
-                    "type": "auto",
-                    "fuel_needed": 15,
-                    "wait_time_sec": 4,
-                    "count": 3
-                },
-                {
-                    "type": "auto",
-                    "fuel_needed": 20,
-                    "wait_time_sec": -1,
-                    "count": 1
-                },
-            ]
-        }
 
 JSON File Requirements for Statistics
 
