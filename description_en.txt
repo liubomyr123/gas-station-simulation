@@ -11,7 +11,8 @@ This file contains information about its fields that will define the program's b
 4) vehicles - An array of vehicles arriving at the station to refuel. 
     Required field.
 5) max_vehicle_capacity: The maximum number of vehicles the simulation will process. 
-    If the number of vehicles exceeds this value, the program will randomly select this number of vehicles and display a warning.
+    If the number of vehicles exceeds this value, the program will select 
+    first number of vehicles of max_vehicle_capacity from field vehicles and display a warning.
     Optional field.
 6) randomize_arrival - A boolean field indicating whether vehicle arrivals should be randomized.
         false → Vehicles arrive in the defined order.

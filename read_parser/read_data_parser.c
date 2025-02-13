@@ -1204,7 +1204,7 @@ void clean_up_json_result(UserJsonResult **json_result)
                 (*json_result)->result_vehicles = NULL;
             }
         }
-        
+
         free((*json_result)->all_vehicles);
         (*json_result)->all_vehicles = NULL;
     }
@@ -1248,6 +1248,22 @@ void clean_up_read_data_parser_result(ReadDataParserResult **read_data_parser_re
     );
     free((*read_data_parser_result));
     *read_data_parser_result = NULL;
+}
+
+StatusType get_limited_amount(UserJsonResult *json_result)
+{
+    printf("Program selecting first %d vehicles...\n", json_result->result_vehicles_length);
+    json_result->result_vehicles = (Car **)malloc(json_result->result_vehicles_length * sizeof(Car));
+    if (json_result->result_vehicles == NULL)
+    {
+        return ALLOCATION_ERROR;
+    }
+
+    for (int j = 0; j < json_result->result_vehicles_length; j++)
+    {
+        json_result->result_vehicles[j] = json_result->all_vehicles[j];
+    }
+    return CORRECT_VALUE;
 }
 
 ReadDataParserResult *read_data_parser(char *path)
@@ -1511,15 +1527,19 @@ ReadDataParserResult *read_data_parser(char *path)
     {
         if (is_overlap_vehicle_length)
         {
-            printf("Program will random select %d vehicles...\n", json_result->result_vehicles_length);
-            StatusType randomize_result = randomize_vehicles(json_result);
-            if (handle_randomize_vehicles(randomize_result, &json_result, &read_data_parser_result) == 0)
+            printf("Program will select first %d vehicles...\n", json_result->result_vehicles_length);
+            StatusType limited_amount_result = get_limited_amount(json_result);
+            if (limited_amount_result == ALLOCATION_ERROR)
             {
+                printf("❌ [vehicles] unable to allocate memory\n");
+                clean_up();
+                clean_up_json_result(&json_result);
+                read_data_parser_result->status = ALLOCATION_ERROR;
                 return read_data_parser_result;
             }
-            else
+            if (limited_amount_result == CORRECT_VALUE)
             {
-                printf("✅ Successfully randomized vehicles\n");
+                printf("✅ Successfully selected first %d vehicles\n", json_result->result_vehicles_length);
             }
         }
     }
@@ -1549,15 +1569,19 @@ ReadDataParserResult *read_data_parser(char *path)
         {
             if (is_overlap_vehicle_length)
             {
-                printf("Program will random select %d vehicles...\n", json_result->result_vehicles_length);
-                StatusType randomize_result = randomize_vehicles(json_result);
-                if (handle_randomize_vehicles(randomize_result, &json_result, &read_data_parser_result) == 0)
+                printf("Program will select first %d vehicles...\n", json_result->result_vehicles_length);
+                StatusType limited_amount_result = get_limited_amount(json_result);
+                if (limited_amount_result == ALLOCATION_ERROR)
                 {
+                    printf("❌ [vehicles] unable to allocate memory\n");
+                    clean_up();
+                    clean_up_json_result(&json_result);
+                    read_data_parser_result->status = ALLOCATION_ERROR;
                     return read_data_parser_result;
                 }
-                else
+                if (limited_amount_result == CORRECT_VALUE)
                 {
-                    printf("✅ Successfully randomized vehicles\n");
+                    printf("✅ Successfully selected first %d vehicles\n", json_result->result_vehicles_length);
                 }
             }
         }
