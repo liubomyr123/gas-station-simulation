@@ -11,6 +11,8 @@
 #include <errno.h>
 #include <string.h>
 
+#include "util_read_data_parser.h"
+
 pthread_mutex_t log_lock = PTHREAD_MUTEX_INITIALIZER;
 time_t start_time = 0;
 
@@ -25,7 +27,7 @@ char *get_formatted_time(char *formatted_time)
     return formatted_time;
 }
 
-void print_car(int car_number, const char *message, ...)
+void print_car(VehicleType vehicle_type, int car_number, const char *message, ...)
 {
     va_list args;
     va_start(args, message);
@@ -35,9 +37,39 @@ void print_car(int car_number, const char *message, ...)
 #ifdef DEBUG_
     char formatted_time[10];
     get_formatted_time(formatted_time);
-    printf("[%s] 🚗 #%d: ", formatted_time, car_number);
+    if (vehicle_type == VEHICLE_AUTO)
+    {
+        printf("[%s] 🚗 #%d: ", formatted_time, car_number);
+    }
+    else if (vehicle_type == VEHICLE_VAN)
+    {
+        printf("[%s] 🚙 #%d: ", formatted_time, car_number);
+    }
+    else if (vehicle_type == VEHICLE_TRUCK)
+    {
+        printf("[%s] 🚛 #%d: ", formatted_time, car_number);
+    }
+    else
+    {
+        printf("[%s] 🚗 #%d: ", formatted_time, car_number);
+    }
 #else
-    printf("🚗 #%d: ", car_number);
+    if (vehicle_type == VEHICLE_AUTO)
+    {
+        printf("🚗 #%d: ", car_number);
+    }
+    else if (vehicle_type == VEHICLE_VAN)
+    {
+        printf("🚙 #%d: ", car_number);
+    }
+    else if (vehicle_type == VEHICLE_TRUCK)
+    {
+        printf("🚛 #%d: ", car_number);
+    }
+    else
+    {
+        printf("🚗 #%d: ", car_number);
+    }
 #endif
     vprintf(message, args);
     printf("\n");
@@ -105,36 +137,55 @@ int get_os_thread_limit()
     return count;
 }
 
-void print_ram_info() {
+void print_ram_info()
+{
     long total_ram = sysconf(_SC_PHYS_PAGES) * sysconf(_SC_PAGESIZE);
     struct sysinfo info;
 
-    if (sysinfo(&info) == 0) {
-        if (total_ram >= 1024 * 1024 * 1024) {
+    if (sysinfo(&info) == 0)
+    {
+        if (total_ram >= 1024 * 1024 * 1024)
+        {
             print_debug("Total RAM: %.2f GB", (double)total_ram / (1024 * 1024 * 1024));
-        } else if (total_ram >= 1024 * 1024) {
+        }
+        else if (total_ram >= 1024 * 1024)
+        {
             print_debug("Total RAM: %.2f MB", (double)total_ram / (1024 * 1024));
-        } else if (total_ram >= 1024) {
+        }
+        else if (total_ram >= 1024)
+        {
             print_debug("Total RAM: %.2f KB", (double)total_ram / 1024);
-        } else {
+        }
+        else
+        {
             print_debug("Total RAM: %ld bytes", total_ram);
         }
 
-        if (info.freeram >= 1024 * 1024 * 1024) {
+        if (info.freeram >= 1024 * 1024 * 1024)
+        {
             print_debug("Free RAM: %.2f GB", (double)info.freeram / (1024 * 1024 * 1024));
-        } else if (info.freeram >= 1024 * 1024) {
+        }
+        else if (info.freeram >= 1024 * 1024)
+        {
             print_debug("Free RAM: %.2f MB", (double)info.freeram / (1024 * 1024));
-        } else if (info.freeram >= 1024) {
+        }
+        else if (info.freeram >= 1024)
+        {
             print_debug("Free RAM: %.2f KB", (double)info.freeram / 1024);
-        } else {
+        }
+        else
+        {
             print_debug("Free RAM: %ld bytes", info.freeram);
         }
-    } else {
+    }
+    else
+    {
         perror("sysinfo");
     }
 }
 
-void print_cpu_info() {
+void print_cpu_info()
+{
     int num_cores = sysconf(_SC_NPROCESSORS_ONLN);
     print_debug("Number of CPU cores (online): %d", num_cores);
 
@@ -142,7 +193,8 @@ void print_cpu_info() {
     print_debug("Number of CPU cores (configured): %d", total_cores);
 }
 
-void print_thread_stack_size_info() {
+void print_thread_stack_size_info()
+{
     pthread_attr_t attributes;
     pthread_attr_init(&attributes);
 
@@ -156,12 +208,14 @@ void print_thread_stack_size_info() {
     print_debug("PTHREAD_STACK_MIN stack size: %ld", stack_size);
 }
 
-void print_max_number_of_threads() {
+void print_max_number_of_threads()
+{
     int os_thread_limit = get_os_thread_limit();
     print_debug("Max number of threads: %ld", os_thread_limit);
 }
 
-void print_total_simulation_time() {
+void print_total_simulation_time()
+{
     time_t end_time = time(NULL);
     double elapsed_time = difftime(end_time, start_time);
     print_debug("Total simulation time: %.2f seconds", elapsed_time);

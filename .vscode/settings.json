@@ -9,6 +9,8 @@
         "errno.h": "c",
         "time.h": "c",
         "algorithm": "c",
-        "array": "c"
+        "array": "c",
+        "util_read_data_parser.h": "c",
+        "cjson.h": "c"
     }
 }

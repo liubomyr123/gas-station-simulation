@@ -17,8 +17,11 @@ DEBUG_DEFINE_FLAGS = $(addprefix -D, $(DEBUG_FLAGS))
 # Name of the output executable
 TARGET = gas_station
 
+# cjson `.c` source files
+CJSON_SRCS = cjson/cJSON.c
+
 # Find all `.c` source files in the current directory
-SRCS = $(wildcard *.c)
+SRCS = $(wildcard *.c) $(CJSON_SRCS)
 
 # Default target: compile the program
 all: $(TARGET)

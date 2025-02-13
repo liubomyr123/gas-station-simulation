@@ -11,7 +11,7 @@ time_t start_time;
 
 char *get_formatted_time(char *formatted_time);
 
-void print_car(int car_number, const char *message, ...);
+void print_car(VehicleType vehicle_type, int car_number, const char *message, ...);
 
 void print_tanker(int car_number, const char *message, ...);
 
