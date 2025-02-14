@@ -74,44 +74,33 @@ void *tanker(void *thread_data)
     while (total_fuel_left > 0)
     {
         int fuel_per_time = (total_fuel_left < fuel_per_time_default) ? total_fuel_left : fuel_per_time_default;
-        pthread_mutex_lock(&dynamic_lock);
+        pthread_mutex_lock(&dynamic_lock); // 🔒
         gas_station_fuel_storage += fuel_per_time;
         total_fuel_left -= fuel_per_time;
         tanker_data->total_fuel_deliveries++;
 
         printf("\n");
         print_tanker(tanker_id, "⏳ Unloading %d liters of fuel into the station...", fuel_per_time);
-        sleep(2);
         print_tanker(tanker_id, "🛢️  Fuel unloaded successfully. Station storage now holds: %d liters.", gas_station_fuel_storage);
 
         if (total_fuel_left == 0)
         {
             print_tanker(tanker_id, "Tanker is empty...");
+            print_tanker(tanker_id, "Tanker is leaving the station...");
         }
         else
         {
             print_tanker(tanker_id, "🚚 Remaining fuel in tanker: %d liters.", total_fuel_left);
+            print_tanker(tanker_id, "✅ Fuel available and ready for consumption, preparing for next delivery...");
         }
 
         // Notify all waiting cars that fuel is available
-        pthread_cond_broadcast(&dynamic_cond);
+        pthread_cond_broadcast(&dynamic_cond); // 🔔
+        pthread_mutex_unlock(&dynamic_lock);   // 🔓
 
-        if (total_fuel_left == 0)
-        {
-            print_tanker(tanker_id, "Tanker is leaving the station...");
-            printf("\n");
-            pthread_mutex_unlock(&dynamic_lock);
-            break;
-        }
-        else
-        {
-            print_tanker(tanker_id, "✅ Fuel available and ready for consumption, preparing for next delivery...");
-            printf("\n");
-            pthread_mutex_unlock(&dynamic_lock);
-
-            // Give cars a chance to acquire the mutex, check fuel, and proceed if possible
-            sleep(2);
-        }
+        // Give cars a chance to acquire the mutex, check fuel, and proceed if possible
+        // This also shows that tanker is fueling during 1 second
+        sleep(1);
     }
     return NULL;
 }
@@ -130,7 +119,7 @@ void *car(void *thread_data)
     print_car(vehicle_type, car_id, "Attempting to get fuel...\n");
     // sleep(1);
     car_data->start_waiting_time = time(NULL);
-    pthread_mutex_lock(&dynamic_lock);
+    pthread_mutex_lock(&dynamic_lock); // 🔒
 
     int is_time_passed = 0;
 
@@ -164,7 +153,6 @@ void *car(void *thread_data)
         {
             if (car_waiting_time == 0)
             {
-                printf("==========================\n");
                 is_time_passed = 1;
                 break;
             }
@@ -172,20 +160,34 @@ void *car(void *thread_data)
             print_car(vehicle_type, car_id, "❌ Not enough fuel, waiting for delivery...");
             if (car_waiting_time > 0)
             {
-                time_t current_time = time(NULL);
-                struct timespec waiting_time;
-                waiting_time.tv_sec = current_time + car_waiting_time;
-                waiting_time.tv_nsec = 0;
+                // time_t current_time = time(NULL);
+                // struct timespec waiting_time;
+                // waiting_time.tv_sec = current_time + car_waiting_time;
+                // waiting_time.tv_nsec = 0;
+                // Or
+                // struct timespec waiting_time;
+                // clock_gettime(CLOCK_REALTIME, &waiting_time);
+                // waiting_time.tv_sec += car_waiting_time;
+                // int result = pthread_cond_timedwait(&dynamic_cond, &dynamic_lock, &waiting_time);
+                // if (result != 0)
+                // {
+                //     if (result == ETIMEDOUT)
+                //     {
+                //         is_time_passed = 1;
+                //         break;
+                //     }
+                // }
 
-                int result = pthread_cond_timedwait(&dynamic_cond, &dynamic_lock, &waiting_time);
+                // ERROR: pthread_cond_timedwait works wrong, for some reason it skips moment when we already out of waiting time
+                // So, instead just use pthread_cond_wait and check if car can still wait
+                pthread_cond_wait(&dynamic_cond, &dynamic_lock);
 
-                if (result != 0)
+                int waiting_time = difftime(time(NULL), car_data->start_waiting_time);
+                printf("car_id [%d]: waiting_time = %d\n", car_id, waiting_time);
+                if (waiting_time >= car_waiting_time)
                 {
-                    if (result == ETIMEDOUT)
-                    {
-                        is_time_passed = 1;
-                        break;
-                    }
+                    is_time_passed = 1;
+                    break;
                 }
             }
             else
@@ -233,9 +235,9 @@ void *car(void *thread_data)
     }
 
     double waiting_time = difftime(car_data->end_waiting_time, car_data->start_waiting_time);
-    print_car(vehicle_type, car_id, "⏳ Waited for %.2f seconds\n", waiting_time); // TODO: we have problems with actual waiting time, it needs investigation
+    print_car(vehicle_type, car_id, "⏳ Waited for %.2f seconds\n", waiting_time);
 
-    pthread_mutex_unlock(&dynamic_lock);
+    pthread_mutex_unlock(&dynamic_lock); // 🔓
 
     fuel_pump_occupied--;
     if (fuel_pump_occupied == 0)
