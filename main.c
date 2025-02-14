@@ -183,7 +183,6 @@ void *car(void *thread_data)
                 pthread_cond_wait(&dynamic_cond, &dynamic_lock);
 
                 int waiting_time = difftime(time(NULL), car_data->start_waiting_time);
-                printf("car_id [%d]: waiting_time = %d\n", car_id, waiting_time);
                 if (waiting_time >= car_waiting_time)
                 {
                     is_time_passed = 1;
@@ -319,9 +318,10 @@ int read_json()
     }
     if (read_data_parser_result->status == CORRECT_VALUE)
     {
-        printf("✅ CORRECT_VALUE\n");
+        // printf("✅ CORRECT_VALUE\n");
     }
 
+    printf("JSON data: \n");
     print_json_result(read_data_parser_result->json_result);
 
     return 0;
@@ -329,13 +329,14 @@ int read_json()
 
 int main()
 {
-    printf("\n🚗 Welcome to the fueling station simulation! 🚗\n");
-
     int read_json_result = read_json();
     if (read_json_result == 1)
     {
         return 1;
     }
+
+    printf("🚗 Welcome to the fueling station simulation! 🚗\n");
+    printf("\n");
 
     number_of_fuel_pumps = read_data_parser_result->json_result->fuel_pumps_count;
     fuel_per_time = read_data_parser_result->json_result->fuel_transfer_rate;

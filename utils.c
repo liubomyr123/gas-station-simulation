@@ -34,7 +34,7 @@ void print_car(VehicleType vehicle_type, int car_number, const char *message, ..
 
     pthread_mutex_lock(&log_lock);
 
-#ifdef DEBUG_
+// #ifdef DEBUG_
     char formatted_time[10];
     get_formatted_time(formatted_time);
     if (vehicle_type == VEHICLE_AUTO)
@@ -53,24 +53,24 @@ void print_car(VehicleType vehicle_type, int car_number, const char *message, ..
     {
         printf("[%s] 🚗 #%d: ", formatted_time, car_number);
     }
-#else
-    if (vehicle_type == VEHICLE_AUTO)
-    {
-        printf("🚗 #%d: ", car_number);
-    }
-    else if (vehicle_type == VEHICLE_VAN)
-    {
-        printf("🚙 #%d: ", car_number);
-    }
-    else if (vehicle_type == VEHICLE_TRUCK)
-    {
-        printf("🚛 #%d: ", car_number);
-    }
-    else
-    {
-        printf("🚗 #%d: ", car_number);
-    }
-#endif
+// #else
+//     if (vehicle_type == VEHICLE_AUTO)
+//     {
+//         printf("🚗 #%d: ", car_number);
+//     }
+//     else if (vehicle_type == VEHICLE_VAN)
+//     {
+//         printf("🚙 #%d: ", car_number);
+//     }
+//     else if (vehicle_type == VEHICLE_TRUCK)
+//     {
+//         printf("🚛 #%d: ", car_number);
+//     }
+//     else
+//     {
+//         printf("🚗 #%d: ", car_number);
+//     }
+// #endif
     vprintf(message, args);
     printf("\n");
 
@@ -86,13 +86,13 @@ void print_tanker(int car_number, const char *message, ...)
 
     pthread_mutex_lock(&log_lock);
 
-#ifdef DEBUG_
+// #ifdef DEBUG_
     char formatted_time[10];
     get_formatted_time(formatted_time);
     printf("[%s] 🚚 #%d: ", formatted_time, car_number);
-#else
-    printf("🚚 #%d: ", car_number);
-#endif
+// #else
+//     printf("🚚 #%d: ", car_number);
+// #endif
     vprintf(message, args);
     printf("\n");
 
