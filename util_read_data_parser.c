@@ -1483,6 +1483,15 @@ ReadDataParserResult *read_data_parser(char *path)
         json_result->fuel_transfer_rate = fuel_transfer_rate;
     }
 
+    if (fuel_transfer_rate > initial_fuel_in_tanker)
+    {
+        if (show_logs)
+        {
+            printf("❌ [fuel_transfer_rate] can not be bigger initial_fuel_in_tanker\n");
+        }
+        json_result->fuel_transfer_rate = initial_fuel_in_tanker;
+    }
+
     StatusType vehicles_result = get_vehicles(json, json_result);
     if (vehicles_result == EMPTY_VALUE)
     {
