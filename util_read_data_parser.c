@@ -45,10 +45,10 @@ int handle_randomize_vehicles(UserJsonResult **json_result, ReadDataParserResult
 int handle_get_limited_amount(UserJsonResult **json_result, ReadDataParserResult **read_data_parser_result);
 int handle_json_result_creation(UserJsonResult **json_result, ReadDataParserResult **read_data_parser_result);
 int handle_fuel_pumps_count(int *fuel_pumps_count, UserJsonResult **json_result, ReadDataParserResult **read_data_parser_result);
+int handle_fuel_transfer_rate(int *fuel_transfer_rate, UserJsonResult **json_result, ReadDataParserResult **read_data_parser_result);
 int handle_randomize_arrival(_Bool *randomize_arrival, UserJsonResult **json_result, ReadDataParserResult **read_data_parser_result);
 int handle_max_vehicle_capacity(int *max_vehicle_capacity, UserJsonResult **json_result, ReadDataParserResult **read_data_parser_result);
 int handle_initial_fuel_in_tanker(int *initial_fuel_in_tanker, UserJsonResult **json_result, ReadDataParserResult **read_data_parser_result);
-int handle_fuel_transfer_rate(int *fuel_transfer_rate, UserJsonResult **json_result, ReadDataParserResult **read_data_parser_result);
 
 StatusType get_file_buffer(char **buffer, char *path);
 StatusType parse_file_buffer(cJSON **json, char **buffer);

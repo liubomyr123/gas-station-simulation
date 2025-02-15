@@ -1,7 +1,7 @@
 {
     "fuel_pumps_count": 2,
     "randomize_arrival": false,
-    "max_vehicle_capacity": 10,
+    "max_vehicle_capacity": 50,
     "initial_fuel_in_tanker": 50,
     "fuel_transfer_rate": 60,
     "vehicles": [
@@ -25,6 +25,112 @@
                     "wait_time_sec": 2,
                     "fuel_needed": 15,
                     "count": 1
+                }
+            ]
+        },
+        {
+            "vehicle_type": "van",
+            "default_fuel_needed": 10,
+            "default_wait_time_sec": 4,
+            "default_count": 2,
+            "custom_waiting_list": []
+        },
+        {
+            "vehicle_type": "truck",
+            "default_fuel_needed": 10,
+            "default_wait_time_sec": 4,
+            "default_count": 2
+        },
+        {
+            "vehicle_type": "van_t",
+            "default_fuel_needed": 10,
+            "default_wait_time_sec": 4,
+            "default_count": 2,
+            "custom_waiting_list": []
+        },
+        {
+            "vehicle_type": "truck",
+            "default_fuel_needed": 10,
+            "default_count": 2,
+            "custom_waiting_list": []
+        },
+        {
+            "vehicle_type": "truck",
+            "default_wait_time_sec": 4,
+            "default_count": 2
+        },
+        {
+            "vehicle_type": "van",
+            "default_fuel_needed": 10,
+            "default_wait_time_sec": 4,
+            "default_count": 3,
+            "custom_waiting_list": [
+                {
+                    "wait_time_sec": -1,
+                    "fuel_needed": 35,
+                    "count": 1
+                },
+                {
+                    "fuel_needed": 15,
+                    "count": 1
+                },
+                {
+                    "wait_time_sec": 2,
+                    "count": 1
+                },
+                {
+                    "count": 4
+                },
+                {
+                    "count": 0
+                },
+                {
+                    "fuel_needed": 0,
+                    "count": 1
+                },
+                {
+                    "wait_time_sec": 0,
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "vehicle_type": "van",
+            "default_fuel_needed": 0,
+            "default_wait_time_sec": 0,
+            "default_count": 0
+        },
+        {
+            "vehicle_type": "van",
+            "default_fuel_needed": -5,
+            "default_wait_time_sec": -5,
+            "default_count": -5
+        },
+        {
+            "vehicle_type": "van",
+            "default_fuel_needed": 10,
+            "default_wait_time_sec": 4,
+            "default_count": 3,
+            "custom_waiting_list": [
+                {
+                    "wait_time_sec": -2
+                },
+                {
+                    "count": -4
+                }
+            ]
+        },
+        {
+            "vehicle_type": "van",
+            "default_fuel_needed": -10,
+            "default_wait_time_sec": 0,
+            "default_count": -3,
+            "custom_waiting_list": [
+                {
+                    "wait_time_sec": -2
+                },
+                {
+                    "count": -4
                 }
             ]
         }
