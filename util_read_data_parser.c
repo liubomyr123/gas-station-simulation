@@ -735,7 +735,6 @@ int get_default_count(cJSON *vehicle_p, int *default_count)
 
 StatusType validate_vehicles(cJSON *vehicles_array_p, int *all_vehicles_length, int *valid_indexes)
 {
-    _Bool show_logs = 0;
     cJSON *vehicle_p = NULL;
     int index = 0;
     my_cJSON_ArrayForEach(vehicle_p, vehicles_array_p, index)
@@ -990,7 +989,6 @@ StatusType get_all_vehicles(cJSON *json, UserJsonResult *json_result)
 
 void clean_up()
 {
-    _Bool show_logs = false;
     if (show_logs)
     {
         printf("\nCleaning up...\n");
@@ -1016,7 +1014,6 @@ void clean_up()
 
 StatusType randomize_vehicles(UserJsonResult *json_result)
 {
-    _Bool show_logs = false;
     if (show_logs)
     {
         printf("Program running randomizer...\n");
@@ -1150,7 +1147,6 @@ void clean_up_json_result(UserJsonResult **json_result)
     }
     free((*json_result));
     (*json_result) = NULL;
-    _Bool show_logs = false;
     if (show_logs)
     {
         printf("Cleaning results finished\n");
@@ -1180,7 +1176,6 @@ int handle_randomize_vehicles(UserJsonResult **json_result, ReadDataParserResult
 
 StatusType get_limited_amount(UserJsonResult *json_result)
 {
-    _Bool show_logs = false;
     if (show_logs)
     {
         printf("Program selecting first %d vehicles...\n", json_result->result_vehicles_length);
