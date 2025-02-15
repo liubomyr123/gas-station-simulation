@@ -1123,6 +1123,7 @@ StatusType get_all_vehicles(cJSON *json, UserJsonResult *json_result)
         {
             printf("\n");
             printf("---------------------------------------------Level 1: START\n");
+            printf("index: [%d]\n", index);
         }
         VehicleType vehicle_type = get_vehicle_type(vehicle_p);
         if (vehicle_type == VEHICLE_NOT_FOUND)
@@ -1454,14 +1455,22 @@ StatusType validate_custom_waiting_list(cJSON *json, int *local_vehicle_capacity
 
         int fuel_needed = 0;
         StatusType fuel_needed_result = get_custom_waiting_list_fuel_needed(custom_waiting_list_item_p, &fuel_needed);
-        if (fuel_needed_result != CORRECT_VALUE)
+        if (fuel_needed_result == WRONG_TYPE)
+        {
+            continue;
+        }
+        if (fuel_needed_result == WRONG_VALUE)
         {
             continue;
         }
 
         int wait_time_sec = 0;
         StatusType wait_time_sec_result = get_custom_waiting_list_wait_time_sec(custom_waiting_list_item_p, &wait_time_sec);
-        if (wait_time_sec_result != CORRECT_VALUE)
+        if (wait_time_sec_result == WRONG_TYPE)
+        {
+            continue;
+        }
+        if (wait_time_sec_result == WRONG_VALUE)
         {
             continue;
         }
