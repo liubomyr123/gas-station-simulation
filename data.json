@@ -19,7 +19,7 @@
                 {
                     "wait_time_sec": 400,
                     "fuel_needed": 15,
-                    "count": 1
+                    "count": 100
                 },
                 {
                     "wait_time_sec": 2,

@@ -76,11 +76,11 @@ int read_json()
     }
     if (read_data_parser_result->status == CORRECT_VALUE)
     {
-        // printf("✅ CORRECT_VALUE\n");
+        printf("✅ CORRECT_VALUE\n");
     }
 
-    printf("JSON data: \n");
-    print_json_result(read_data_parser_result->json_result);
+    // printf("JSON data: \n");
+    // print_json_result(read_data_parser_result->json_result);
 
     return 0;
 }
