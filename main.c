@@ -318,7 +318,7 @@ int read_json()
     }
     if (read_data_parser_result->status == CORRECT_VALUE)
     {
-        // printf("✅ CORRECT_VALUE\n");
+        printf("✅ CORRECT_VALUE\n");
     }
 
     printf("JSON data: \n");
@@ -332,6 +332,11 @@ int main()
     int read_json_result = read_json();
     if (read_json_result == 1)
     {
+        return 1;
+    }
+    if (read_data_parser_result == NULL)
+    {
+        printf("❌ [read_data_parser_result] is empty.\n");
         return 1;
     }
 
@@ -369,7 +374,7 @@ int main()
 
         if (pthread_create(&car_threads[i], &attributes, car, (void *)&cars[i]) != 0)
         {
-            printf("Error: pthread_create for car %d\n", car_id);
+            printf("❌ Error: pthread_create for car %d\n", car_id);
         }
     }
     // Cars arrived first
@@ -387,7 +392,7 @@ int main()
 
         if (pthread_create(&tanker_threads[i], &attributes, tanker, (void *)&tankers[i]) != 0)
         {
-            printf("Error: pthread_create for tanker %d\n", tanker_id);
+            printf("❌ Error: pthread_create for tanker %d\n", tanker_id);
         }
     }
 
@@ -396,7 +401,7 @@ int main()
         int car_id = i + 1;
         if (pthread_join(car_threads[i], NULL) != 0)
         {
-            printf("Error: pthread_join for car %d\n", car_id);
+            printf("❌ Error: pthread_join for car %d\n", car_id);
         }
     }
     for (int i = 0; i < tankers_number; i++)
@@ -404,7 +409,7 @@ int main()
         int tanker_id = i + 1;
         if (pthread_join(tanker_threads[i], NULL) != 0)
         {
-            printf("Error: pthread_join for tanker %d\n", tanker_id);
+            printf("❌ Error: pthread_join for tanker %d\n", tanker_id);
         }
     }
 

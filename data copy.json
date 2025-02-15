@@ -1,0 +1,347 @@
+{
+    "fuel_pumps_count": 3,
+    "randomize_arrival": false,
+    "max_vehicle_capacity": 60,
+    "initial_fuel_in_tanker": 50,
+    "fuel_transfer_rate": 60,
+    "vehicles": [
+        {
+            "vehicle_type": 234234,
+            "default_fuel_needed": 10,
+            "default_wait_time_sec": 4,
+            "default_count": 2,
+            "custom_waiting_list": []
+        },
+        {
+            "vehicle_type": "",
+            "default_fuel_needed": 10,
+            "default_wait_time_sec": 4,
+            "default_count": 2,
+            "custom_waiting_list": []
+        },
+        {
+            "vehicle_type": "auto",
+            "default_fuel_needed": "10",
+            "default_wait_time_sec": 4,
+            "default_count": 2,
+            "custom_waiting_list": []
+        },
+        {
+            "vehicle_type": "auto",
+            "default_fuel_needed": 0,
+            "default_wait_time_sec": 4,
+            "default_count": 2,
+            "custom_waiting_list": []
+        },
+        {
+            "vehicle_type": "auto",
+            "default_wait_time_sec": 4,
+            "default_count": 2,
+            "custom_waiting_list": []
+        },
+        {
+            "vehicle_type": "auto",
+            "default_fuel_needed": -10,
+            "default_wait_time_sec": 4,
+            "default_count": 2,
+            "custom_waiting_list": []
+        },
+        {
+            "vehicle_type": "auto",
+            "default_fuel_needed": 10,
+            "default_wait_time_sec": "4",
+            "default_count": 2,
+            "custom_waiting_list": []
+        },
+        {
+            "vehicle_type": "auto",
+            "default_fuel_needed": 20,
+            "default_wait_time_sec": 0,
+            "default_count": 2,
+            "custom_waiting_list": []
+        },
+        {
+            "vehicle_type": "auto",
+            "default_fuel_needed": 20,
+            "default_wait_time_sec": -10,
+            "default_count": 2,
+            "custom_waiting_list": []
+        },
+        {
+            "vehicle_type": "auto",
+            "default_fuel_needed": 20,
+            "default_wait_time_sec": -1,
+            "default_count": "2",
+            "custom_waiting_list": []
+        },
+        {
+            "vehicle_type": "auto",
+            "default_fuel_needed": 20,
+            "default_wait_time_sec": -1,
+            "default_count": 0,
+            "custom_waiting_list": []
+        },
+        {
+            "vehicle_type": "auto",
+            "default_fuel_needed": 20,
+            "default_wait_time_sec": -1,
+            "default_count": -10,
+            "custom_waiting_list": []
+        },
+        {
+            "vehicle_type": "auto",
+            "default_fuel_needed": 20,
+            "default_wait_time_sec": 8,
+            "default_count": 1,
+            "custom_waiting_list": []
+        },
+        {
+            "vehicle_type": "auto",
+            "default_fuel_needed": 20,
+            "default_wait_time_sec": 8,
+            "default_count": 1
+        },
+        {
+            "vehicle_type": "auto",
+            "default_fuel_needed": 20,
+            "default_wait_time_sec": 8,
+            "default_count": 1,
+            "custom_waiting_list": [
+                {}
+            ]
+        },
+        {
+            "vehicle_type": "van",
+            "default_fuel_needed": 135,
+            "default_wait_time_sec": 45,
+            "default_count": 1,
+            "custom_waiting_list": [
+                {
+                    "wait_time_sec": 3
+                },
+                {
+                    "fuel_needed": 15
+                },
+                {
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "vehicle_type": "van",
+            "default_fuel_needed": 135,
+            "default_wait_time_sec": 45,
+            "default_count": 1,
+            "custom_waiting_list": [
+                {
+                    "wait_time_sec": "3"
+                },
+                {
+                    "fuel_needed": "15"
+                },
+                {
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "vehicle_type": "truck",
+            "default_fuel_needed": 135,
+            "default_wait_time_sec": 45,
+            "default_count": 1,
+            "custom_waiting_list": [
+                {
+                    "wait_time_sec": "3"
+                },
+                {
+                    "fuel_needed": 12,
+                    "count": 2
+                },
+                {
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "vehicle_type": "truck",
+            "default_fuel_needed": 135,
+            "default_wait_time_sec": 45,
+            "default_count": 1,
+            "custom_waiting_list": [
+                {
+                    "wait_time_sec": 5
+                },
+                {
+                    "fuel_needed": 12,
+                    "count": 2
+                },
+                {
+                    "count": "1"
+                }
+            ]
+        },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        {
+            "vehicle_type": "auto",
+            "default_fuel_needed": 13,
+            "default_wait_time_sec": 4,
+            "default_count": 5,
+            "custom_waiting_list": [
+                {
+                    "wait_time_sec": -1,
+                    "fuel_needed": 35,
+                    "count": 1
+                },
+                {
+                    "wait_time_sec": 400,
+                    "fuel_needed": 15,
+                    "count": 10
+                },
+                {
+                    "wait_time_sec": 2,
+                    "fuel_needed": 15,
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "vehicle_type": "van",
+            "default_fuel_needed": 10,
+            "default_wait_time_sec": 4,
+            "default_count": 2,
+            "custom_waiting_list": []
+        },
+        {
+            "vehicle_type": "truck",
+            "default_fuel_needed": 10,
+            "default_wait_time_sec": 4,
+            "default_count": 2
+        },
+        {
+            "vehicle_type": "3van_t",
+            "default_fuel_needed": 10,
+            "default_wait_time_sec": 4,
+            "default_count": 2,
+            "custom_waiting_list": []
+        },
+        {
+            "vehicle_type": "truck",
+            "default_fuel_needed": 10,
+            "default_count": 2,
+            "custom_waiting_list": []
+        },
+        {
+            "vehicle_type": "truck",
+            "default_fuel_needed": 10,
+            "default_wait_time_sec": 14,
+            "default_count": -2,
+            "custom_waiting_list": []
+        },
+        {
+            "vehicle_type": "truck",
+            "default_wait_time_sec": 4,
+            "default_count": 2
+        },
+        {
+            "vehicle_type": "van",
+            "default_fuel_needed": 10,
+            "default_wait_time_sec": 4,
+            "default_count": 3,
+            "custom_waiting_list": [
+                {
+                    "wait_time_sec": -1,
+                    "fuel_needed": 35,
+                    "count": 1
+                },
+                {
+                    "fuel_needed": 15,
+                    "count": 10
+                },
+                {
+                    "wait_time_sec": 2,
+                    "count": 1
+                },
+                {
+                    "count": 4
+                },
+                {
+                    "count": 0
+                },
+                {
+                    "fuel_needed": 0,
+                    "count": 1
+                },
+                {
+                    "wait_time_sec": 0,
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "vehicle_type": "van",
+            "default_fuel_needed": 0,
+            "default_wait_time_sec": 0,
+            "default_count": 0
+        },
+        {
+            "vehicle_type": "van",
+            "default_fuel_needed": -5,
+            "default_wait_time_sec": -5,
+            "default_count": -5
+        },
+        {
+            "vehicle_type": "van",
+            "default_fuel_needed": 10,
+            "default_wait_time_sec": 4,
+            "default_count": 3,
+            "custom_waiting_list": [
+                {
+                    "wait_time_sec": -2
+                },
+                {
+                    "count": -4
+                }
+            ]
+        },
+        {
+            "vehicle_type": "van",
+            "default_fuel_needed": -10,
+            "default_wait_time_sec": 0,
+            "default_count": -3,
+            "custom_waiting_list": [
+                {
+                    "wait_time_sec": -2
+                },
+                {
+                    "count": -4
+                }
+            ]
+        }
+    ]
+}

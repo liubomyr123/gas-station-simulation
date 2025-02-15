@@ -12,6 +12,7 @@
         "array": "c",
         "util_read_data_parser.h": "c",
         "cjson.h": "c",
-        "string.h": "c"
+        "string.h": "c",
+        "stdio.h": "c"
     }
 }

@@ -230,12 +230,12 @@ void init_attributes_with_min_stack_size(pthread_attr_t *attributes_p)
         {
         case EINVAL:
         {
-            print_debug("Invalid settings for thread attributes (EINVAL).\n");
+            print_debug("❌ Invalid settings for thread attributes (EINVAL).\n");
             break;
         }
         default:
         {
-            print_debug("Unknown error initializing pthread attributes: %s\n", strerror(init_result));
+            print_debug("❌ Unknown error initializing pthread attributes: %s\n", strerror(init_result));
             break;
         }
         }
@@ -248,12 +248,12 @@ void init_attributes_with_min_stack_size(pthread_attr_t *attributes_p)
         {
         case EINVAL:
         {
-            print_debug("Invalid stack size (EINVAL). The stack size is too small or too large.\n");
+            print_debug("❌ Invalid stack size (EINVAL). The stack size is too small or too large.\n");
             break;
         }
         default:
         {
-            print_debug("Unknown error setting stack size: %s\n", strerror(setstacksize_result));
+            print_debug("❌ Unknown error setting stack size: %s\n", strerror(setstacksize_result));
             break;
         }
         }

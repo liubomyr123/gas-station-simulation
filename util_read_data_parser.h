@@ -10,9 +10,13 @@
 #define MAX_VEHICLES 100
 #define MAX_FUEL_PUMPS_COUNT 10
 #define MAX_INITIAL_FUEL_IN_TANKER 500
-#define MAX_FUEL_TRANSFER_RATE 100
+#define MAX_FUEL_TRANSFER_RATE 80
 
 #define my_cJSON_ArrayForEach(element, array, index) for (element = (array != NULL) ? (array)->child : NULL; element != NULL; element = element->next, index++)
+
+#define AUTO_ICON "🚗"
+#define VAN_ICON "🚙"
+#define TRUCK_ICON "🚛"
 
 typedef enum
 {

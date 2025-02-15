@@ -30,7 +30,7 @@ void clean_up();
 void clean_up_json_result(UserJsonResult **json_result);
 void clean_up_read_data_parser_result(ReadDataParserResult **read_data_parser_result);
 
-VehicleType get_vehicle_type(cJSON *vehicle_p, _Bool show_logs_now);
+VehicleType get_vehicle_type(cJSON *vehicle_p, _Bool show_logs_now, int index);
 
 int get_file_size(FILE *fp);
 int get_default_count(cJSON *vehicle_p, int *default_count, _Bool show_logs_now);
@@ -143,7 +143,10 @@ ReadDataParserResult *read_data_parser(char *path, _Bool show_logs)
         return read_data_parser_result;
     }
 
-    clean_up();
+    if (show_logs == true)
+    {
+        clean_up();
+    }
     return read_data_parser_result;
 }
 
@@ -310,7 +313,7 @@ StatusType get_array_value(cJSON *json, void **result, char *name)
     return CORRECT_VALUE;
 }
 
-VehicleType get_vehicle_type(cJSON *vehicle_p, _Bool show_logs_now)
+VehicleType get_vehicle_type(cJSON *vehicle_p, _Bool show_logs_now, int index)
 {
     VehicleType result_vehicle_type = VEHICLE_NOT_FOUND;
 
@@ -320,21 +323,24 @@ VehicleType get_vehicle_type(cJSON *vehicle_p, _Bool show_logs_now)
     {
         if (SHOW_LOGS && show_logs_now)
         {
-            printf("❌ [vehicle_type] unable to allocate memory\n");
+            printf("📌 Vehicle #%d ❌ (Allocation error)\n", index);
+            // printf("❌ [vehicle_type] unable to allocate memory\n");
         }
     }
     if (vehicle_type_result == NOT_FOUND)
     {
         if (SHOW_LOGS && show_logs_now)
         {
-            printf("❌ [vehicle_type] was not found. Field is required!\n");
+            printf("📌 Vehicle #%d ❌ (Field is required)\n", index);
+            // printf("❌ [vehicle_type] was not found. Field is required!\n");
         }
     }
     if (vehicle_type_result == WRONG_TYPE)
     {
         if (SHOW_LOGS && show_logs_now)
         {
-            printf("❌ [vehicle_type] is not string\n");
+            printf("📌 Vehicle #%d ❌ (Is not string)\n", index);
+            // printf("❌ [vehicle_type] is not string\n");
         }
     }
 
@@ -346,7 +352,8 @@ VehicleType get_vehicle_type(cJSON *vehicle_p, _Bool show_logs_now)
     {
         if (SHOW_LOGS && show_logs_now)
         {
-            printf("✅ [vehicle_type]: 🚗\n");
+            printf("📌 Vehicle #%d (%s)\n", index, AUTO_ICON);
+            // printf("✅ [vehicle_type]: 🚗\n");
         }
         result_vehicle_type = VEHICLE_AUTO;
     }
@@ -354,7 +361,8 @@ VehicleType get_vehicle_type(cJSON *vehicle_p, _Bool show_logs_now)
     {
         if (SHOW_LOGS && show_logs_now)
         {
-            printf("✅ [vehicle_type]: 🚛\n");
+            printf("📌 Vehicle #%d (%s)\n", index, TRUCK_ICON);
+            // printf("✅ [vehicle_type]: 🚛\n");
         }
         result_vehicle_type = VEHICLE_TRUCK;
     }
@@ -362,15 +370,26 @@ VehicleType get_vehicle_type(cJSON *vehicle_p, _Bool show_logs_now)
     {
         if (SHOW_LOGS && show_logs_now)
         {
-            printf("✅ [vehicle_type]: 🚙\n");
+            printf("📌 Vehicle #%d (%s)\n", index, VAN_ICON);
+            // printf("✅ [vehicle_type]: 🚙\n");
         }
         result_vehicle_type = VEHICLE_VAN;
     }
     else
     {
-        if (SHOW_LOGS && show_logs_now)
+        if (strlen(vehicle_type) == 0)
         {
-            printf("❌ [vehicle_type] was not found. Field is required!\n");
+            if (SHOW_LOGS && show_logs_now)
+            {
+                printf("📌 Vehicle #%d ❌ (Empty name)\n", index);
+            }
+        }
+        else
+        {
+            if (SHOW_LOGS && show_logs_now)
+            {
+                printf("📌 Vehicle #%d ❌ (Wrong type name)\n", index);
+            }
         }
         result_vehicle_type = VEHICLE_NOT_FOUND;
     }
@@ -389,7 +408,7 @@ void clean_up()
 {
     if (SHOW_LOGS)
     {
-        printf("\nCleaning up...\n");
+        printf("\n🧹 Cleaning up...\n");
     }
     if (buffer != NULL)
     {
@@ -397,7 +416,7 @@ void clean_up()
         buffer = NULL;
         if (SHOW_LOGS)
         {
-            printf("Cleaned buffer\n");
+            printf("✅ Buffer cleaned up\n");
         }
     }
     if (json != NULL)
@@ -405,7 +424,7 @@ void clean_up()
         cJSON_Delete(json);
         if (SHOW_LOGS)
         {
-            printf("Cleaned json\n");
+            printf("✅ JSON cleaned up!\n");
         }
     }
 }
@@ -444,7 +463,7 @@ void clean_up_json_result(UserJsonResult **json_result)
     (*json_result) = NULL;
     if (SHOW_LOGS)
     {
-        printf("Cleaning results finished\n");
+        printf("✅ Cleaning data results finished!\n");
     }
 }
 
@@ -460,6 +479,10 @@ void clean_up_read_data_parser_result(ReadDataParserResult **read_data_parser_re
     );
     free((*read_data_parser_result));
     *read_data_parser_result = NULL;
+    if (SHOW_LOGS)
+    {
+        printf("✅ Cleaning user results finished!\n");
+    }
 }
 
 // ============
@@ -472,7 +495,7 @@ StatusType randomize_vehicles(UserJsonResult *json_result)
 {
     if (SHOW_LOGS)
     {
-        printf("Program running randomizer...\n");
+        printf("✅ Program is running randomizer...\n");
     }
     srand(time(NULL));
     json_result->result_vehicles = (Vehicle **)malloc(json_result->result_vehicles_length * sizeof(Vehicle));
@@ -535,7 +558,7 @@ StatusType randomize_vehicles(UserJsonResult *json_result)
 
     if (bigger_length < result_length)
     {
-        printf("Max vehicle array length is less current\n");
+        printf("❌ Max vehicle array length is less current\n");
         return WRONG_VALUE;
     }
 
@@ -576,7 +599,7 @@ int handle_randomize_vehicles(UserJsonResult **json_result, ReadDataParserResult
     StatusType randomize_result = randomize_vehicles((*json_result));
     if (randomize_result == ALLOCATION_ERROR)
     {
-        printf("❌ [vehicles] unable to allocate memory\n");
+        printf("❌ [result_vehicles] unable to allocate memory\n");
         clean_up();
         clean_up_json_result(json_result);
         (*read_data_parser_result)->status = ALLOCATION_ERROR;
@@ -596,7 +619,7 @@ StatusType get_limited_amount(UserJsonResult *json_result)
 {
     if (SHOW_LOGS)
     {
-        printf("Program selecting first %d vehicles...\n", json_result->result_vehicles_length);
+        printf("✅ Program is selecting first %d vehicles...\n", json_result->result_vehicles_length);
     }
     json_result->result_vehicles = (Vehicle **)malloc(json_result->result_vehicles_length * sizeof(Vehicle));
     if (json_result->result_vehicles == NULL)
@@ -616,7 +639,7 @@ int handle_get_limited_amount(UserJsonResult **json_result, ReadDataParserResult
     StatusType limited_amount_result = get_limited_amount((*json_result));
     if (limited_amount_result == ALLOCATION_ERROR)
     {
-        printf("❌ [vehicles] unable to allocate memory\n");
+        printf("❌ [result_vehicles] unable to allocate memory\n");
         clean_up();
         clean_up_json_result(json_result);
         (*read_data_parser_result)->status = ALLOCATION_ERROR;
@@ -636,7 +659,7 @@ int handle_fuel_pumps_count(int *fuel_pumps_count, UserJsonResult **json_result,
     StatusType fuel_pumps_count_result = get_int_value(json, fuel_pumps_count, "fuel_pumps_count");
     if (fuel_pumps_count_result == NOT_FOUND)
     {
-        printf("❌ [fuel_pumps_count] was not found. Field is required!\n");
+        printf("❌ [fuel_pumps_count]: Field is required!\n");
         clean_up();
         clean_up_json_result(json_result);
         (*read_data_parser_result)->status = NOT_FOUND;
@@ -644,7 +667,7 @@ int handle_fuel_pumps_count(int *fuel_pumps_count, UserJsonResult **json_result,
     }
     else if (fuel_pumps_count_result == WRONG_TYPE)
     {
-        printf("❌ [fuel_pumps_count] is not number\n");
+        printf("❌ [fuel_pumps_count]: Invalid value! Expected a number.\n");
         clean_up();
         clean_up_json_result(json_result);
         (*read_data_parser_result)->status = WRONG_TYPE;
@@ -652,15 +675,15 @@ int handle_fuel_pumps_count(int *fuel_pumps_count, UserJsonResult **json_result,
     }
     else if ((*fuel_pumps_count) > MAX_FUEL_PUMPS_COUNT)
     {
-        printf("❌ [fuel_pumps_count] can not be bigger MAX_FUEL_PUMPS_COUNT: %d\n", MAX_FUEL_PUMPS_COUNT);
+        printf("❌ [fuel_pumps_count]: Must be less than or equal to the maximum limit of %d.\n", MAX_FUEL_PUMPS_COUNT);
         clean_up();
         clean_up_json_result(json_result);
-        (*read_data_parser_result)->status = WRONG_VALUE;
+        (*read_data_parser_result)->status = MAX_VALUE_ERROR;
         return 0;
     }
     else if ((*fuel_pumps_count) <= 0)
     {
-        printf("❌ [fuel_pumps_count] must be bigger 0\n");
+        printf("❌ [fuel_pumps_count]: Must be greater than 0.\n");
         clean_up();
         clean_up_json_result(json_result);
         (*read_data_parser_result)->status = WRONG_VALUE;
@@ -677,12 +700,12 @@ int handle_randomize_arrival(_Bool *randomize_arrival, UserJsonResult **json_res
     {
         if (SHOW_LOGS)
         {
-            printf("❓ [randomize_arrival] was not found. Default value is [false]\n");
+            printf("🔍 [randomize_arrival]: Not found. Defaulting to false\n");
         }
     }
     else if (randomize_arrival_result == WRONG_TYPE)
     {
-        printf("❌ [randomize_arrival] is not boolean\n");
+        printf("❌ [randomize_arrival]: Invalid value! Expected a boolean.\n");
         clean_up();
         clean_up_json_result(json_result);
         (*read_data_parser_result)->status = WRONG_TYPE;
@@ -697,7 +720,7 @@ int handle_max_vehicle_capacity(int *max_vehicle_capacity, UserJsonResult **json
     StatusType max_vehicle_capacity_result = get_int_value(json, max_vehicle_capacity, "max_vehicle_capacity");
     if (max_vehicle_capacity_result == NOT_FOUND)
     {
-        printf("❌ [max_vehicle_capacity] was not found. Field is required!\n");
+        printf("❌ [max_vehicle_capacity]: Field is required!\n");
         clean_up();
         clean_up_json_result(json_result);
         (*read_data_parser_result)->status = NOT_FOUND;
@@ -705,7 +728,7 @@ int handle_max_vehicle_capacity(int *max_vehicle_capacity, UserJsonResult **json
     }
     else if (max_vehicle_capacity_result == WRONG_TYPE)
     {
-        printf("❌ [max_vehicle_capacity] is not number\n");
+        printf("❌ [max_vehicle_capacity]: Invalid value! Expected a number.\n");
         clean_up();
         clean_up_json_result(json_result);
         (*read_data_parser_result)->status = WRONG_TYPE;
@@ -713,7 +736,7 @@ int handle_max_vehicle_capacity(int *max_vehicle_capacity, UserJsonResult **json
     }
     else if ((*max_vehicle_capacity) > MAX_VEHICLES)
     {
-        printf("❌ [max_vehicle_capacity] can not be bigger MAX_VEHICLES: %d\n", MAX_VEHICLES);
+        printf("❌ [max_vehicle_capacity]: Must be less than or equal to the maximum limit of %d.\n", MAX_VEHICLES);
         clean_up();
         clean_up_json_result(json_result);
         (*read_data_parser_result)->status = MAX_VALUE_ERROR;
@@ -721,7 +744,7 @@ int handle_max_vehicle_capacity(int *max_vehicle_capacity, UserJsonResult **json
     }
     else if ((*max_vehicle_capacity) <= 0)
     {
-        printf("❌ [max_vehicle_capacity] must be bigger 0\n");
+        printf("❌ [max_vehicle_capacity]: Must be greater than 0.\n");
         clean_up();
         clean_up_json_result(json_result);
         (*read_data_parser_result)->status = WRONG_VALUE;
@@ -736,7 +759,7 @@ int handle_initial_fuel_in_tanker(int *initial_fuel_in_tanker, UserJsonResult **
     StatusType initial_fuel_in_tanker_result = get_int_value(json, initial_fuel_in_tanker, "initial_fuel_in_tanker");
     if (initial_fuel_in_tanker_result == NOT_FOUND)
     {
-        printf("❌ [initial_fuel_in_tanker] was not found. Field is required!\n");
+        printf("❌ [initial_fuel_in_tanker]: Field is required!\n");
         clean_up();
         clean_up_json_result(json_result);
         (*read_data_parser_result)->status = NOT_FOUND;
@@ -744,7 +767,7 @@ int handle_initial_fuel_in_tanker(int *initial_fuel_in_tanker, UserJsonResult **
     }
     else if (initial_fuel_in_tanker_result == WRONG_TYPE)
     {
-        printf("❌ [initial_fuel_in_tanker] is not number\n");
+        printf("❌ [initial_fuel_in_tanker]: Invalid value! Expected a number.\n");
         clean_up();
         clean_up_json_result(json_result);
         (*read_data_parser_result)->status = WRONG_TYPE;
@@ -752,7 +775,7 @@ int handle_initial_fuel_in_tanker(int *initial_fuel_in_tanker, UserJsonResult **
     }
     else if ((*initial_fuel_in_tanker) > MAX_INITIAL_FUEL_IN_TANKER)
     {
-        printf("❌ [initial_fuel_in_tanker] can not be bigger MAX_INITIAL_FUEL_IN_TANKER: %d\n", MAX_INITIAL_FUEL_IN_TANKER);
+        printf("❌ [initial_fuel_in_tanker]: Must be less than or equal to the maximum limit of %d.\n", MAX_INITIAL_FUEL_IN_TANKER);
         clean_up();
         clean_up_json_result(json_result);
         (*read_data_parser_result)->status = MAX_VALUE_ERROR;
@@ -760,7 +783,7 @@ int handle_initial_fuel_in_tanker(int *initial_fuel_in_tanker, UserJsonResult **
     }
     else if ((*initial_fuel_in_tanker) <= 0)
     {
-        printf("❌ [initial_fuel_in_tanker] must be bigger 0\n");
+        printf("❌ [initial_fuel_in_tanker]: Must be greater than 0.\n");
         clean_up();
         clean_up_json_result(json_result);
         (*read_data_parser_result)->status = WRONG_VALUE;
@@ -775,7 +798,7 @@ int handle_fuel_transfer_rate(int *fuel_transfer_rate, UserJsonResult **json_res
     StatusType fuel_transfer_rate_result = get_int_value(json, fuel_transfer_rate, "fuel_transfer_rate");
     if (fuel_transfer_rate_result == NOT_FOUND)
     {
-        printf("❌ [fuel_transfer_rate] was not found. Field is required!\n");
+        printf("❌ [fuel_transfer_rate]: Field is required!\n");
         clean_up();
         clean_up_json_result(json_result);
         (*read_data_parser_result)->status = NOT_FOUND;
@@ -783,7 +806,7 @@ int handle_fuel_transfer_rate(int *fuel_transfer_rate, UserJsonResult **json_res
     }
     else if (fuel_transfer_rate_result == WRONG_TYPE)
     {
-        printf("❌ [fuel_transfer_rate] is not number\n");
+        printf("❌ [fuel_transfer_rate]: Invalid value! Expected a number.\n");
         clean_up();
         clean_up_json_result(json_result);
         (*read_data_parser_result)->status = WRONG_TYPE;
@@ -791,7 +814,7 @@ int handle_fuel_transfer_rate(int *fuel_transfer_rate, UserJsonResult **json_res
     }
     else if ((*fuel_transfer_rate) > MAX_FUEL_TRANSFER_RATE)
     {
-        printf("❌ [fuel_transfer_rate] can not be bigger MAX_FUEL_TRANSFER_RATE: %d\n", MAX_FUEL_TRANSFER_RATE);
+        printf("❌ [fuel_transfer_rate]: Must be less than or equal to the maximum limit of %d.\n", MAX_FUEL_TRANSFER_RATE);
         clean_up();
         clean_up_json_result(json_result);
         (*read_data_parser_result)->status = MAX_VALUE_ERROR;
@@ -799,7 +822,7 @@ int handle_fuel_transfer_rate(int *fuel_transfer_rate, UserJsonResult **json_res
     }
     else if ((*fuel_transfer_rate) <= 0)
     {
-        printf("❌ [fuel_transfer_rate] must be bigger 0\n");
+        printf("❌ [fuel_transfer_rate]: Must be greater than 0.\n");
         clean_up();
         clean_up_json_result(json_result);
         (*read_data_parser_result)->status = WRONG_VALUE;
@@ -812,7 +835,7 @@ int handle_fuel_transfer_rate(int *fuel_transfer_rate, UserJsonResult **json_res
         if (SHOW_LOGS)
         {
             printf(
-                "🚨 [fuel_transfer_rate] can not be bigger than [initial_fuel_in_tanker].\n"
+                "🚨 [fuel_transfer_rate]: can not be bigger than [initial_fuel_in_tanker].\n"
                 "🚨 Setting [fuel_transfer_rate] to [initial_fuel_in_tanker]...\n");
         }
         (*json_result)->fuel_transfer_rate = (*json_result)->initial_fuel_in_tanker;
@@ -891,15 +914,16 @@ int handle_result_vehicles(UserJsonResult **json_result, ReadDataParserResult **
 
     if (SHOW_LOGS)
     {
-        printf("\n");
-        printf("✅ [vehicles] number of all vehicles: %d\n", (*json_result)->all_vehicles_length);
-        printf("\n");
+        // printf("\n");
+        // printf("✅ [vehicles] number of all vehicles: %d\n", (*json_result)->all_vehicles_length);
+        // printf("\n");
     }
     if ((*json_result)->all_vehicles_length > MAX_VEHICLES)
     {
         if (SHOW_LOGS)
         {
-            printf("❌ [vehicles] can not be bigger than MAX_VEHICLES: %d\n", MAX_VEHICLES);
+            printf("❌ [vehicles]: Must be less than or equal to the maximum limit of %d.\n", MAX_VEHICLES);
+            // printf("❌ [vehicles]: can not be bigger than MAX_VEHICLES: %d\n", MAX_VEHICLES);
         }
     }
 
@@ -908,7 +932,7 @@ int handle_result_vehicles(UserJsonResult **json_result, ReadDataParserResult **
     {
         if (SHOW_LOGS)
         {
-            printf("❌ [vehicles] can not be bigger than [max_vehicle_capacity]: %d\n", (*json_result)->max_vehicle_capacity);
+            printf("❌ [vehicles]: Must be less than or equal to %d (max_vehicle_capacity).\n", (*json_result)->max_vehicle_capacity);
         }
         (*json_result)->result_vehicles_length = (*json_result)->max_vehicle_capacity;
     }
@@ -916,7 +940,7 @@ int handle_result_vehicles(UserJsonResult **json_result, ReadDataParserResult **
     {
         if (SHOW_LOGS)
         {
-            printf("✅ Program will use [vehicles]/[max_vehicle_capacity] cars: %d/%d\n",
+            printf("✅ Program will use %d vehicles out of the %d total allowed.\n",
                    (*json_result)->all_vehicles_length,
                    (*json_result)->max_vehicle_capacity);
         }
@@ -926,25 +950,15 @@ int handle_result_vehicles(UserJsonResult **json_result, ReadDataParserResult **
     if (SHOW_LOGS)
     {
         printf("\n");
-        printf("✅ [vehicles] number of result vehicles: %d\n", (*json_result)->result_vehicles_length);
+        printf("✅ The final count of vehicles program will use is: %d\n", (*json_result)->result_vehicles_length);
         printf("\n");
     }
 
     if ((*json_result)->randomize_arrival == 1)
     {
-        if (is_overlap_vehicle_length)
+        if (SHOW_LOGS)
         {
-            if (SHOW_LOGS)
-            {
-                printf("Program will random select %d vehicles...\n", (*json_result)->result_vehicles_length);
-            }
-        }
-        else
-        {
-            if (SHOW_LOGS)
-            {
-                printf("Program is going to randomize %d vehicles list...\n", (*json_result)->result_vehicles_length);
-            }
+            printf("✅ Program is going to randomize %d vehicles list...\n", (*json_result)->result_vehicles_length);
         }
         if (handle_randomize_vehicles(json_result, read_data_parser_result) == 0)
         {
@@ -961,7 +975,7 @@ int handle_result_vehicles(UserJsonResult **json_result, ReadDataParserResult **
         {
             if (SHOW_LOGS)
             {
-                printf("Program will select first %d vehicles...\n", (*json_result)->result_vehicles_length);
+                printf("✅ Program is going to select first %d vehicles...\n", (*json_result)->result_vehicles_length);
             }
             if (handle_get_limited_amount(json_result, read_data_parser_result) == 0)
             {
@@ -977,18 +991,12 @@ int handle_result_vehicles(UserJsonResult **json_result, ReadDataParserResult **
     return 1;
 }
 
-// ============
-
-//
-
-// ============
-
 int handle_get_all_vehicles(UserJsonResult **json_result, ReadDataParserResult **read_data_parser_result)
 {
     StatusType vehicles_result = get_all_vehicles(json, *json_result);
     if (vehicles_result == VALIDATION_ERROR)
     {
-        printf("❌ [vehicles] failed validation\n");
+        printf("❌ [vehicles]: Validation was failed.\n");
         clean_up();
         clean_up_json_result(json_result);
         (*read_data_parser_result)->status = VALIDATION_ERROR;
@@ -996,7 +1004,7 @@ int handle_get_all_vehicles(UserJsonResult **json_result, ReadDataParserResult *
     }
     if (vehicles_result == NOT_FOUND)
     {
-        printf("❌ [vehicles] was not found. Field is required!\n");
+        printf("❌ [vehicles]: Field is required!\n");
         clean_up();
         clean_up_json_result(json_result);
         (*read_data_parser_result)->status = NOT_FOUND;
@@ -1004,7 +1012,7 @@ int handle_get_all_vehicles(UserJsonResult **json_result, ReadDataParserResult *
     }
     if (vehicles_result == WRONG_TYPE)
     {
-        printf("❌ [vehicles] is not array\n");
+        printf("❌ [vehicles]: Invalid value! Expected an array.\n");
         clean_up();
         clean_up_json_result(json_result);
         (*read_data_parser_result)->status = WRONG_TYPE;
@@ -1012,7 +1020,7 @@ int handle_get_all_vehicles(UserJsonResult **json_result, ReadDataParserResult *
     }
     if (vehicles_result == EMPTY_VALUE)
     {
-        printf("❌ [vehicles] is empty\n");
+        printf("❌ [vehicles]: Is empty. Must contain at least one valid object.\n");
         clean_up();
         clean_up_json_result(json_result);
         (*read_data_parser_result)->status = EMPTY_VALUE;
@@ -1020,7 +1028,7 @@ int handle_get_all_vehicles(UserJsonResult **json_result, ReadDataParserResult *
     }
     if (vehicles_result == EMPTY_VEHICLE_CAPACITY_VALUE)
     {
-        printf("❌ [vehicles] does not have any valid cars\n");
+        printf("❌ [vehicles]: Does not have any valid object. Must contain at least one valid object.\n");
         clean_up();
         clean_up_json_result(json_result);
         (*read_data_parser_result)->status = EMPTY_VEHICLE_CAPACITY_VALUE;
@@ -1028,7 +1036,7 @@ int handle_get_all_vehicles(UserJsonResult **json_result, ReadDataParserResult *
     }
     if (vehicles_result == ALLOCATION_ERROR)
     {
-        printf("❌ [vehicles] unable to allocate memory\n");
+        printf("❌ [vehicles]: Unable to allocate memory.\n");
         clean_up();
         clean_up_json_result(json_result);
         (*read_data_parser_result)->status = ALLOCATION_ERROR;
@@ -1037,14 +1045,200 @@ int handle_get_all_vehicles(UserJsonResult **json_result, ReadDataParserResult *
     return 1;
 }
 
+// ============
+
+//
+
+// ============
+
+StatusType validate_vehicles(cJSON *vehicles_array_p, int *all_vehicles_length, int *valid_indexes)
+{
+    if (SHOW_LOGS)
+    {
+        printf("✅ Program running validation...\n");
+    }
+    cJSON *vehicle_p = NULL;
+    int index = 0;
+    my_cJSON_ArrayForEach(vehicle_p, vehicles_array_p, index)
+    {
+        if (SHOW_LOGS)
+        {
+            printf("\n");
+            printf("\n");
+        }
+        // printf("Vehicle array item #%d\n", index);
+        valid_indexes[index] = 0;
+        if (SHOW_LOGS)
+        {
+            // printf("--------------------------------------------- --------------- Level 1: START\n");
+        }
+
+        VehicleType vehicle_type = get_vehicle_type(vehicle_p, true, index);
+        if (vehicle_type == VEHICLE_NOT_FOUND)
+        {
+            continue;
+        }
+
+        int default_fuel_needed = 0;
+        if (get_default_fuel_needed(vehicle_p, &default_fuel_needed, true) == 0)
+        {
+            continue;
+        }
+
+        int default_wait_time_sec = 0;
+        if (get_default_wait_time_sec(vehicle_p, &default_wait_time_sec, true) == 0)
+        {
+            continue;
+        }
+
+        int default_count = 0;
+        if (get_default_count(vehicle_p, &default_count, true) == 0)
+        {
+            continue;
+        }
+
+        int local_vehicle_capacity = 0;
+        StatusType custom_waiting_list_result = validate_custom_waiting_list(vehicle_p, &local_vehicle_capacity, true);
+        if (custom_waiting_list_result == NOT_FOUND)
+        {
+            if (SHOW_LOGS)
+            {
+                printf("   └─ ❌ Custom list was not found. Using default values.\n");
+            }
+            local_vehicle_capacity += default_count;
+        }
+        if (custom_waiting_list_result == EMPTY_VALUE)
+        {
+            if (SHOW_LOGS)
+            {
+                printf("   └─ ❌ Custom list is empty. Using default values.\n");
+            }
+            local_vehicle_capacity += default_count;
+        }
+        if (custom_waiting_list_result == WRONG_TYPE)
+        {
+            if (SHOW_LOGS)
+            {
+                printf("   └─ ❌ Custom list is not array\n");
+            }
+            continue;
+        }
+        if (custom_waiting_list_result == WRONG_VALUE)
+        {
+            if (SHOW_LOGS)
+            {
+                // printf("\n");
+                printf("   ❌ Did not find valid vehicles. Using default values.\n");
+                printf("   ✅ Total valid vehicles in this entry: %d\n", default_count);
+                // printf("--------------------------------------------- --------------- Level 1: END\n");
+            }
+            local_vehicle_capacity += default_count;
+        }
+        else
+        {
+            if (SHOW_LOGS)
+            {
+                // printf("\n");
+                printf("   ✅ Total valid vehicles in this entry: %d\n", local_vehicle_capacity);
+                // printf("--------------------------------------------- --------------- Level 1: END\n");
+            }
+        }
+        *all_vehicles_length += local_vehicle_capacity;
+        valid_indexes[index] = 1;
+    }
+
+    return CORRECT_VALUE;
+}
+
+StatusType validate_custom_waiting_list(cJSON *json, int *local_vehicle_capacity, _Bool show_logs_now)
+{
+    cJSON *custom_waiting_list_p = NULL;
+    StatusType custom_waiting_list_result = get_array_value(json, (void **)&custom_waiting_list_p, "custom_waiting_list");
+    if (custom_waiting_list_result == NOT_FOUND)
+    {
+        return NOT_FOUND;
+    }
+    else if (custom_waiting_list_result == WRONG_TYPE)
+    {
+        return WRONG_TYPE;
+    }
+
+    int custom_waiting_list_length = cJSON_GetArraySize(custom_waiting_list_p);
+    if (custom_waiting_list_length == 0)
+    {
+        return EMPTY_VALUE;
+    }
+
+    if (SHOW_LOGS && show_logs_now)
+    {
+        printf("   └─ ✅ Custom list (%d items):\n", custom_waiting_list_length);
+    }
+
+    cJSON *custom_waiting_list_item_p = NULL;
+    int index = 0;
+    my_cJSON_ArrayForEach(custom_waiting_list_item_p, custom_waiting_list_p, index)
+    {
+        if (SHOW_LOGS && show_logs_now)
+        {
+            // printf("\n");
+            // printf("--------------------------------Level 2: START\n");
+            printf("       ─ Item #%d:\n", index);
+        }
+        int fuel_needed = 0;
+        StatusType fuel_needed_result = get_custom_waiting_list_fuel_needed(custom_waiting_list_item_p, &fuel_needed, true);
+        if (fuel_needed_result == WRONG_TYPE)
+        {
+            continue;
+        }
+        if (fuel_needed_result == WRONG_VALUE)
+        {
+            continue;
+        }
+
+        int wait_time_sec = 0;
+        StatusType wait_time_sec_result = get_custom_waiting_list_wait_time_sec(custom_waiting_list_item_p, &wait_time_sec, true);
+        if (wait_time_sec_result == WRONG_TYPE)
+        {
+            continue;
+        }
+        if (wait_time_sec_result == WRONG_VALUE)
+        {
+            continue;
+        }
+
+        int count = 0;
+        StatusType count_result = get_custom_waiting_list_count(custom_waiting_list_item_p, &count, true);
+        if (count_result != CORRECT_VALUE)
+        {
+            continue;
+        }
+
+        (*local_vehicle_capacity) += count;
+        if (SHOW_LOGS && show_logs_now)
+        {
+            // printf("--------------------------------Level 2: END\n");
+        }
+    }
+
+    if ((*local_vehicle_capacity) == 0)
+    {
+        return WRONG_VALUE;
+    }
+
+    return CORRECT_VALUE;
+}
+
+// ============
+
+//
+
+// ============
+
 StatusType get_all_vehicles(cJSON *json, UserJsonResult *json_result)
 {
     cJSON *vehicles_array_p = NULL;
     StatusType vehicles_array_result = get_array_value(json, (void **)&vehicles_array_p, "vehicles");
-    if (vehicles_array_p == NULL)
-    {
-        return ALLOCATION_ERROR;
-    }
+
     if (vehicles_array_result == NOT_FOUND)
     {
         return NOT_FOUND;
@@ -1052,6 +1246,10 @@ StatusType get_all_vehicles(cJSON *json, UserJsonResult *json_result)
     else if (vehicles_array_result == WRONG_TYPE)
     {
         return WRONG_TYPE;
+    }
+    if (vehicles_array_p == NULL)
+    {
+        return ALLOCATION_ERROR;
     }
 
     int vehicle_length = cJSON_GetArraySize(vehicles_array_p);
@@ -1082,16 +1280,18 @@ StatusType get_all_vehicles(cJSON *json, UserJsonResult *json_result)
     if (SHOW_LOGS)
     {
         printf("\n");
-        printf("List of analyzed vehicles elements:\n");
+        printf("\n");
+        printf("📋 List of analyzed vehicle elements:\n");
+        printf("\n");
         for (int i = 0; i < vehicle_length; i++)
         {
             if (valid_indexes[i] == 1)
             {
-                printf("✅ [%d] Vehicle array item is valid\n", i);
+                printf("✅ [%2d] Valid.\n", i);
             }
             if (valid_indexes[i] == 0)
             {
-                printf("❌ [%d] Vehicle array item is NOT valid\n", i);
+                printf("❌ [%2d] Invalid.\n", i);
             }
         }
         printf("\n");
@@ -1117,7 +1317,7 @@ StatusType get_all_vehicles(cJSON *json, UserJsonResult *json_result)
             if (SHOW_LOGS)
             {
                 // printf("\n");
-                printf("❌ [%d] Skipping...\n", index);
+                // printf("❌ [%d] Skipping...\n", index);
             }
             continue;
         }
@@ -1126,7 +1326,7 @@ StatusType get_all_vehicles(cJSON *json, UserJsonResult *json_result)
             if (SHOW_LOGS)
             {
                 // printf("\n");
-                printf("✅ [%d] Processing...\n", index);
+                // printf("✅ [%d] Processing...\n", index);
             }
         }
 
@@ -1134,7 +1334,7 @@ StatusType get_all_vehicles(cJSON *json, UserJsonResult *json_result)
         {
             // printf("--------------------------------------------- --------------- Level 1: START\n");
         }
-        VehicleType vehicle_type = get_vehicle_type(vehicle_p, false);
+        VehicleType vehicle_type = get_vehicle_type(vehicle_p, false, index);
         if (vehicle_type == VEHICLE_NOT_FOUND)
         {
             continue;
@@ -1217,91 +1417,6 @@ StatusType get_all_vehicles(cJSON *json, UserJsonResult *json_result)
     return CORRECT_VALUE;
 }
 
-StatusType validate_vehicles(cJSON *vehicles_array_p, int *all_vehicles_length, int *valid_indexes)
-{
-    printf("✅ Program running validation...\n");
-    printf("\n");
-    cJSON *vehicle_p = NULL;
-    int index = 0;
-    my_cJSON_ArrayForEach(vehicle_p, vehicles_array_p, index)
-    {
-        printf("\n");
-        printf("\n");
-        printf("Vehicle array item #%d\n", index);
-        valid_indexes[index] = 0;
-        if (SHOW_LOGS)
-        {
-            printf("--------------------------------------------- --------------- Level 1: START\n");
-        }
-        VehicleType vehicle_type = get_vehicle_type(vehicle_p, true);
-        if (vehicle_type == VEHICLE_NOT_FOUND)
-        {
-            continue;
-        }
-
-        int default_fuel_needed = 0;
-        if (get_default_fuel_needed(vehicle_p, &default_fuel_needed, true) == 0)
-        {
-            continue;
-        }
-
-        int default_wait_time_sec = 0;
-        if (get_default_wait_time_sec(vehicle_p, &default_wait_time_sec, true) == 0)
-        {
-            continue;
-        }
-
-        int default_count = 0;
-        if (get_default_count(vehicle_p, &default_count, true) == 0)
-        {
-            continue;
-        }
-
-        int local_vehicle_capacity = 0;
-        StatusType custom_waiting_list_result = validate_custom_waiting_list(vehicle_p, &local_vehicle_capacity, true);
-        if (custom_waiting_list_result == NOT_FOUND)
-        {
-            if (SHOW_LOGS)
-            {
-                printf("❌ [custom_waiting_list] was not found\n");
-            }
-            local_vehicle_capacity += default_count;
-        }
-        if (custom_waiting_list_result == EMPTY_VALUE)
-        {
-            if (SHOW_LOGS)
-            {
-                printf("❌ [custom_waiting_list] is empty\n");
-            }
-            local_vehicle_capacity += default_count;
-        }
-        else if (custom_waiting_list_result == WRONG_TYPE)
-        {
-            if (SHOW_LOGS)
-            {
-                printf("❌ [custom_waiting_list] is not array\n");
-            }
-            continue;
-        }
-
-        *all_vehicles_length += local_vehicle_capacity;
-        valid_indexes[index] = 1;
-        if (SHOW_LOGS)
-        {
-            printf("\n");
-            printf("Current vehicle array item has %d valid vehicles\n", local_vehicle_capacity);
-            printf("--------------------------------------------- --------------- Level 1: END\n");
-            // printf("\n");
-            // printf("\n");
-            // printf("\n");
-            // printf("\n");
-            // printf("\n");
-        }
-    }
-
-    return CORRECT_VALUE;
-}
-
 int get_default_fuel_needed(cJSON *vehicle_p, int *default_fuel_needed, _Bool show_logs_now)
 {
     StatusType default_fuel_needed_result = get_int_value(vehicle_p, default_fuel_needed, "default_fuel_needed");
@@ -1309,7 +1424,7 @@ int get_default_fuel_needed(cJSON *vehicle_p, int *default_fuel_needed, _Bool sh
     {
         if (SHOW_LOGS && show_logs_now)
         {
-            printf("❓ [default_fuel_needed] was not found. Field is required!\n");
+            printf("   └─ ❌ Default fuel: Field is required!\n");
         }
         return 0;
     }
@@ -1317,7 +1432,7 @@ int get_default_fuel_needed(cJSON *vehicle_p, int *default_fuel_needed, _Bool sh
     {
         if (SHOW_LOGS && show_logs_now)
         {
-            printf("❌ [default_fuel_needed] is not number\n");
+            printf("   └─ ❌ Default fuel: Invalid value! Expected a number.\n");
         }
         return 0;
     }
@@ -1325,7 +1440,7 @@ int get_default_fuel_needed(cJSON *vehicle_p, int *default_fuel_needed, _Bool sh
     {
         if (SHOW_LOGS && show_logs_now)
         {
-            printf("❌ [default_fuel_needed] can not be negative\n");
+            printf("   └─ ❌ Default fuel: Must be a positive number.\n");
         }
         return 0;
     }
@@ -1333,13 +1448,13 @@ int get_default_fuel_needed(cJSON *vehicle_p, int *default_fuel_needed, _Bool sh
     {
         if (SHOW_LOGS && show_logs_now)
         {
-            printf("❌ [default_fuel_needed] can not be 0\n");
+            printf("   └─ ❌ Default fuel: Cannot be zero.\n");
         }
         return 0;
     }
     if (SHOW_LOGS && show_logs_now)
     {
-        printf("✅ [default_fuel_needed]: %d\n", *default_fuel_needed);
+        printf("   ├─ ✅ Default fuel: %d\n", *default_fuel_needed);
     }
     return 1;
 }
@@ -1351,7 +1466,7 @@ int get_default_wait_time_sec(cJSON *vehicle_p, int *default_wait_time_sec, _Boo
     {
         if (SHOW_LOGS && show_logs_now)
         {
-            printf("❓ [default_wait_time_sec] was not found. Field is required!\n");
+            printf("   └─ ❌ Default wait time: Field is required!\n");
         }
         return 0;
     }
@@ -1359,7 +1474,7 @@ int get_default_wait_time_sec(cJSON *vehicle_p, int *default_wait_time_sec, _Boo
     {
         if (SHOW_LOGS && show_logs_now)
         {
-            printf("❌ [default_wait_time_sec] is not number\n");
+            printf("   └─ ❌ Default wait time: Invalid value! Expected a number.\n");
         }
         return 0;
     }
@@ -1367,13 +1482,13 @@ int get_default_wait_time_sec(cJSON *vehicle_p, int *default_wait_time_sec, _Boo
     {
         if (SHOW_LOGS && show_logs_now)
         {
-            printf("❌ [default_wait_time_sec] value is less than -1. Value can be only -1 or positive\n");
+            printf("   └─ ❌ Default wait time: Value can be only -1 of positive.\n");
         }
         return 0;
     }
     if (SHOW_LOGS && show_logs_now)
     {
-        printf("✅ [default_wait_time_sec]: %d\n", *default_wait_time_sec);
+        printf("   ├─ ✅ Default wait time: %ds\n", *default_wait_time_sec);
     }
     return 1;
 }
@@ -1385,7 +1500,7 @@ int get_default_count(cJSON *vehicle_p, int *default_count, _Bool show_logs_now)
     {
         if (SHOW_LOGS && show_logs_now)
         {
-            printf("❓ [default_count] was not found. Field is required!\n");
+            printf("   └─ ❌ Default count: Field is required!\n");
         }
         return 0;
     }
@@ -1393,7 +1508,7 @@ int get_default_count(cJSON *vehicle_p, int *default_count, _Bool show_logs_now)
     {
         if (SHOW_LOGS && show_logs_now)
         {
-            printf("❌ [default_count] is not number\n");
+            printf("   └─ ❌ Default count: Invalid value! Expected a number.\n");
         }
         return 0;
     }
@@ -1401,7 +1516,7 @@ int get_default_count(cJSON *vehicle_p, int *default_count, _Bool show_logs_now)
     {
         if (SHOW_LOGS && show_logs_now)
         {
-            printf("❌ [default_count] can not be negative\n");
+            printf("   └─ ❌ Default count: Must be a positive number.\n");
         }
         return 0;
     }
@@ -1409,87 +1524,22 @@ int get_default_count(cJSON *vehicle_p, int *default_count, _Bool show_logs_now)
     {
         if (SHOW_LOGS && show_logs_now)
         {
-            printf("❌ [default_count] can not be 0\n");
+            printf("   └─ ❌ Default count: Cannot be zero.\n");
         }
         return 0;
     }
     if (SHOW_LOGS && show_logs_now)
     {
-        printf("✅ [default_count]: %d\n", *default_count);
+        printf("   ├─ ✅ Default count: %d\n", *default_count);
     }
     return 1;
 }
 
-StatusType validate_custom_waiting_list(cJSON *json, int *local_vehicle_capacity, _Bool show_logs_now)
-{
-    cJSON *custom_waiting_list_p = NULL;
-    StatusType custom_waiting_list_result = get_array_value(json, (void **)&custom_waiting_list_p, "custom_waiting_list");
-    if (custom_waiting_list_result == NOT_FOUND)
-    {
-        return NOT_FOUND;
-    }
-    else if (custom_waiting_list_result == WRONG_TYPE)
-    {
-        return WRONG_TYPE;
-    }
+// ============
 
-    int custom_waiting_list_length = cJSON_GetArraySize(custom_waiting_list_p);
-    if (custom_waiting_list_length == 0)
-    {
-        return EMPTY_VALUE;
-    }
+//
 
-    if (SHOW_LOGS && show_logs_now)
-    {
-        printf("✅ Found %d [custom_waiting_list] objects:\n", custom_waiting_list_length);
-    }
-
-    cJSON *custom_waiting_list_item_p = NULL;
-    cJSON_ArrayForEach(custom_waiting_list_item_p, custom_waiting_list_p)
-    {
-        if (SHOW_LOGS && show_logs_now)
-        {
-            printf("\n");
-            printf("--------------------------------Level 2: START\n");
-        }
-        int count = 0;
-        StatusType count_result = get_custom_waiting_list_count(custom_waiting_list_item_p, &count, true);
-        if (count_result != CORRECT_VALUE)
-        {
-            continue;
-        }
-
-        int fuel_needed = 0;
-        StatusType fuel_needed_result = get_custom_waiting_list_fuel_needed(custom_waiting_list_item_p, &fuel_needed, true);
-        if (fuel_needed_result == WRONG_TYPE)
-        {
-            continue;
-        }
-        if (fuel_needed_result == WRONG_VALUE)
-        {
-            continue;
-        }
-
-        int wait_time_sec = 0;
-        StatusType wait_time_sec_result = get_custom_waiting_list_wait_time_sec(custom_waiting_list_item_p, &wait_time_sec, true);
-        if (wait_time_sec_result == WRONG_TYPE)
-        {
-            continue;
-        }
-        if (wait_time_sec_result == WRONG_VALUE)
-        {
-            continue;
-        }
-
-        (*local_vehicle_capacity) += count;
-        if (SHOW_LOGS && show_logs_now)
-        {
-            printf("--------------------------------Level 2: END\n");
-        }
-    }
-
-    return CORRECT_VALUE;
-}
+// ============
 
 StatusType get_custom_waiting_list(cJSON *json, VehicleType vehicle_type, int default_wait_time_sec, int default_fuel_needed, Vehicle **all_user_vehicles, int *count_added_vehicles, _Bool show_logs_now)
 {
@@ -1606,7 +1656,7 @@ StatusType get_custom_waiting_list_count(cJSON *custom_waiting_list_item_p, int 
     {
         if (SHOW_LOGS && show_logs_now)
         {
-            printf("❌ [count] was not found. Field is required!\n");
+            printf("            ❌ Count: Field is required!\n");
         }
         return NOT_FOUND;
     }
@@ -1614,7 +1664,7 @@ StatusType get_custom_waiting_list_count(cJSON *custom_waiting_list_item_p, int 
     {
         if (SHOW_LOGS && show_logs_now)
         {
-            printf("❌ [count] is not number\n");
+            printf("            ❌ Count: Invalid value! Expected a number.\n");
         }
         return WRONG_TYPE;
     }
@@ -1622,13 +1672,13 @@ StatusType get_custom_waiting_list_count(cJSON *custom_waiting_list_item_p, int 
     {
         if (SHOW_LOGS && show_logs_now)
         {
-            printf("❌ [count] must be bigger 0\n");
+            printf("            ❌ Count: Must be greater than 0\n");
         }
         return WRONG_VALUE;
     }
     if (SHOW_LOGS && show_logs_now)
     {
-        printf("✅ [count]: %d\n", *count);
+        printf("            ✅ Count: %d\n", *count);
     }
     return CORRECT_VALUE;
 }
@@ -1640,7 +1690,7 @@ StatusType get_custom_waiting_list_fuel_needed(cJSON *custom_waiting_list_item_p
     {
         if (SHOW_LOGS && show_logs_now)
         {
-            printf("❌ [fuel_needed] was not found.\n");
+            printf("            🔎 Fuel: Not found\n");
         }
         return NOT_FOUND;
     }
@@ -1648,7 +1698,7 @@ StatusType get_custom_waiting_list_fuel_needed(cJSON *custom_waiting_list_item_p
     {
         if (SHOW_LOGS && show_logs_now)
         {
-            printf("❌ [fuel_needed] is not number\n");
+            printf("            ❌ Fuel: Invalid value! Expected a number.\n");
         }
         return WRONG_TYPE;
     }
@@ -1656,13 +1706,13 @@ StatusType get_custom_waiting_list_fuel_needed(cJSON *custom_waiting_list_item_p
     {
         if (SHOW_LOGS && show_logs_now)
         {
-            printf("❌ [fuel_needed] must be bigger 0\n");
+            printf("            ❌ Fuel: Must be greater than 0\n");
         }
         return WRONG_VALUE;
     }
     if (SHOW_LOGS && show_logs_now)
     {
-        printf("✅ [fuel_needed]: %d\n", *fuel_needed);
+        printf("            ✅ Fuel: %d\n", *fuel_needed);
     }
     return CORRECT_VALUE;
 }
@@ -1674,7 +1724,7 @@ StatusType get_custom_waiting_list_wait_time_sec(cJSON *custom_waiting_list_item
     {
         if (SHOW_LOGS && show_logs_now)
         {
-            printf("❌ [wait_time_sec] was not found.\n");
+            printf("            🔎 Wait time: Not found\n");
         }
         return NOT_FOUND;
     }
@@ -1682,8 +1732,7 @@ StatusType get_custom_waiting_list_wait_time_sec(cJSON *custom_waiting_list_item
     {
         if (SHOW_LOGS && show_logs_now)
         {
-
-            printf("❌ [wait_time_sec] is not number\n");
+            printf("            ❌ Wait time: Invalid value! Expected a number.\n");
         }
         return WRONG_TYPE;
     }
@@ -1691,13 +1740,13 @@ StatusType get_custom_waiting_list_wait_time_sec(cJSON *custom_waiting_list_item
     {
         if (SHOW_LOGS && show_logs_now)
         {
-            printf("❌ [wait_time_sec] value is less than -1. Value can be only -1 or positive\n");
+            printf("            ❌ Wait time: Value can be only -1 of positive.\n");
         }
         return WRONG_VALUE;
     }
     if (SHOW_LOGS && show_logs_now)
     {
-        printf("✅ [wait_time_sec]: %d\n", *wait_time_sec);
+        printf("            ✅ Wait time: %d\n", *wait_time_sec);
     }
     return CORRECT_VALUE;
 }
@@ -1731,6 +1780,11 @@ void print_json_result(UserJsonResult *json_result)
     printf("List of cars:\n");
     for (int i = 0; i < json_result->result_vehicles_length; i++)
     {
+        if (json_result->result_vehicles[i] == NULL)
+        {
+            printf("❌ json_result->result_vehicles[i] is NULL\n");
+            continue;
+        }
         if (json_result->result_vehicles[i]->vehicle_type == VEHICLE_VAN)
         {
             printf("🚙 #%d:\n", i + 1);
