@@ -8,7 +8,125 @@
 #include "cjson/cJSON.h"
 #include "util_read_data_parser.h"
 
-_Bool show_logs = false;
+static _Bool show_logs = false;
+static char *buffer = NULL;
+static cJSON *json = NULL;
+
+void print_json_result(UserJsonResult *json_result);
+
+void clean_up();
+void clean_up_json_result(UserJsonResult **json_result);
+void clean_up_read_data_parser_result(ReadDataParserResult **read_data_parser_result);
+
+VehicleType get_vehicle_type(cJSON *vehicle_p);
+
+int get_file_size(FILE *fp);
+int get_default_count(cJSON *vehicle_p, int *default_count);
+int get_default_fuel_needed(cJSON *vehicle_p, int *default_fuel_needed);
+int get_default_wait_time_sec(cJSON *vehicle_p, int *default_wait_time_sec);
+int handle_parse_file_buffer(ReadDataParserResult **read_data_parser_result);
+int handle_get_file_buffer(char *path, ReadDataParserResult **read_data_parser_result);
+int handle_read_data_parser_result_creation(ReadDataParserResult **read_data_parser_result);
+int get_result_vehicles(UserJsonResult **json_result, ReadDataParserResult **read_data_parser_result);
+int handle_get_all_vehicles(UserJsonResult **json_result, ReadDataParserResult **read_data_parser_result);
+int handle_randomize_vehicles(UserJsonResult **json_result, ReadDataParserResult **read_data_parser_result);
+int handle_get_limited_amount(UserJsonResult **json_result, ReadDataParserResult **read_data_parser_result);
+int handle_json_result_creation(UserJsonResult **json_result, ReadDataParserResult **read_data_parser_result);
+int handle_fuel_pumps_count(int *fuel_pumps_count, UserJsonResult **json_result, ReadDataParserResult **read_data_parser_result);
+int handle_randomize_arrival(_Bool *randomize_arrival, UserJsonResult **json_result, ReadDataParserResult **read_data_parser_result);
+int handle_max_vehicle_capacity(int *max_vehicle_capacity, UserJsonResult **json_result, ReadDataParserResult **read_data_parser_result);
+int handle_initial_fuel_in_tanker(int *initial_fuel_in_tanker, UserJsonResult **json_result, ReadDataParserResult **read_data_parser_result);
+int handle_fuel_transfer_rate(int *fuel_transfer_rate, UserJsonResult **json_result, ReadDataParserResult **read_data_parser_result);
+
+StatusType get_file_buffer(char **buffer, char *path);
+StatusType parse_file_buffer(cJSON **json, char **buffer);
+StatusType randomize_vehicles(UserJsonResult *json_result);
+StatusType get_limited_amount(UserJsonResult *json_result);
+StatusType get_int_value(cJSON *json, int *result, char *name);
+StatusType get_array_value(cJSON *json, void **result, char *name);
+StatusType get_string_value(cJSON *json, char **result, char *name);
+StatusType get_boolean_value(cJSON *json, _Bool *result, char *name);
+StatusType get_all_vehicles(cJSON *json, UserJsonResult *json_result);
+StatusType validate_custom_waiting_list(cJSON *json, int *local_vehicle_capacity);
+StatusType get_custom_waiting_list_count(cJSON *custom_waiting_list_item_p, int *count);
+StatusType validate_vehicles(cJSON *vehicles_array_p, int *all_vehicles_length, int *valid_indexes);
+StatusType get_custom_waiting_list_fuel_needed(cJSON *custom_waiting_list_item_p, int *fuel_needed);
+StatusType get_custom_waiting_list_wait_time_sec(cJSON *custom_waiting_list_item_p, int *wait_time_sec);
+StatusType get_custom_waiting_list(cJSON *json, VehicleType vehicle_type, int default_wait_time_sec, int default_fuel_needed, Vehicle **all_user_vehicles, int *count_added_vehicles);
+
+ReadDataParserResult *read_data_parser(char *path)
+{
+    if (path == NULL)
+    {
+        printf("❌ Path string is empty\n");
+        return NULL;
+    }
+
+    ReadDataParserResult *read_data_parser_result = NULL;
+    if (handle_read_data_parser_result_creation(&read_data_parser_result) == 0)
+    {
+        return NULL;
+    }
+
+    if (handle_get_file_buffer(path, &read_data_parser_result) == 0)
+    {
+        return read_data_parser_result;
+    }
+
+    if (handle_parse_file_buffer(&read_data_parser_result) == 0)
+    {
+        return read_data_parser_result;
+    }
+
+    UserJsonResult *json_result = NULL;
+    if (handle_json_result_creation(&json_result, &read_data_parser_result) == 0)
+    {
+        return read_data_parser_result;
+    }
+
+    int fuel_pumps_count = 0;
+    if (handle_fuel_pumps_count(&fuel_pumps_count, &json_result, &read_data_parser_result) == 0)
+    {
+        return read_data_parser_result;
+    }
+
+    _Bool randomize_arrival = 0;
+    if (handle_randomize_arrival(&randomize_arrival, &json_result, &read_data_parser_result) == 0)
+    {
+        return read_data_parser_result;
+    }
+
+    int max_vehicle_capacity = 0;
+    if (handle_max_vehicle_capacity(&max_vehicle_capacity, &json_result, &read_data_parser_result) == 0)
+    {
+        return read_data_parser_result;
+    }
+
+    int initial_fuel_in_tanker = 0;
+    if (handle_initial_fuel_in_tanker(&initial_fuel_in_tanker, &json_result, &read_data_parser_result) == 0)
+    {
+        return read_data_parser_result;
+    }
+
+    int fuel_transfer_rate = 0;
+    if (handle_fuel_transfer_rate(&fuel_transfer_rate, &json_result, &read_data_parser_result) == 0)
+    {
+        return read_data_parser_result;
+    }
+
+    if (handle_get_all_vehicles(&json_result, &read_data_parser_result) == 0)
+    {
+        return read_data_parser_result;
+    }
+
+    if (get_result_vehicles(&json_result, &read_data_parser_result) == 0)
+    {
+        return read_data_parser_result;
+    }
+
+    clean_up();
+    return read_data_parser_result;
+}
 
 int get_file_size(FILE *fp)
 {
@@ -162,7 +280,7 @@ StatusType get_array_value(cJSON *json, void **result, char *name)
     return CORRECT_VALUE;
 }
 
-VehicleType get_vehicle_type(cJSON *vehicle_p, _Bool show_logs)
+VehicleType get_vehicle_type(cJSON *vehicle_p)
 {
     VehicleType result_vehicle_type = VEHICLE_NOT_FOUND;
 
@@ -261,7 +379,7 @@ StatusType get_custom_waiting_list_count(cJSON *custom_waiting_list_item_p, int 
     return CORRECT_VALUE;
 }
 
-StatusType get_custom_waiting_list_fuel_needed(cJSON *custom_waiting_list_item_p, int *fuel_needed, _Bool show_logs)
+StatusType get_custom_waiting_list_fuel_needed(cJSON *custom_waiting_list_item_p, int *fuel_needed)
 {
     StatusType fuel_needed_result = get_int_value(custom_waiting_list_item_p, fuel_needed, "fuel_needed");
     if (fuel_needed_result == NOT_FOUND)
@@ -291,7 +409,7 @@ StatusType get_custom_waiting_list_fuel_needed(cJSON *custom_waiting_list_item_p
     return CORRECT_VALUE;
 }
 
-StatusType get_custom_waiting_list_wait_time_sec(cJSON *custom_waiting_list_item_p, int *wait_time_sec, _Bool show_logs)
+StatusType get_custom_waiting_list_wait_time_sec(cJSON *custom_waiting_list_item_p, int *wait_time_sec)
 {
     StatusType wait_time_sec_result = get_int_value(custom_waiting_list_item_p, wait_time_sec, "wait_time_sec");
     if (wait_time_sec_result == NOT_FOUND)
@@ -367,7 +485,7 @@ StatusType get_custom_waiting_list(cJSON *json, VehicleType vehicle_type, int de
         }
 
         int fuel_needed = 0;
-        StatusType fuel_needed_result = get_custom_waiting_list_fuel_needed(custom_waiting_list_item_p, &fuel_needed, show_logs);
+        StatusType fuel_needed_result = get_custom_waiting_list_fuel_needed(custom_waiting_list_item_p, &fuel_needed);
         if (fuel_needed_result == WRONG_TYPE)
         {
             continue;
@@ -378,7 +496,7 @@ StatusType get_custom_waiting_list(cJSON *json, VehicleType vehicle_type, int de
         }
 
         int wait_time_sec = 0;
-        StatusType wait_time_sec_result = get_custom_waiting_list_wait_time_sec(custom_waiting_list_item_p, &wait_time_sec, show_logs);
+        StatusType wait_time_sec_result = get_custom_waiting_list_wait_time_sec(custom_waiting_list_item_p, &wait_time_sec);
         if (wait_time_sec_result == WRONG_TYPE)
         {
             continue;
@@ -471,14 +589,14 @@ StatusType validate_custom_waiting_list(cJSON *json, int *local_vehicle_capacity
         }
 
         int fuel_needed = 0;
-        StatusType fuel_needed_result = get_custom_waiting_list_fuel_needed(custom_waiting_list_item_p, &fuel_needed, show_logs);
+        StatusType fuel_needed_result = get_custom_waiting_list_fuel_needed(custom_waiting_list_item_p, &fuel_needed);
         if (fuel_needed_result != CORRECT_VALUE)
         {
             continue;
         }
 
         int wait_time_sec = 0;
-        StatusType wait_time_sec_result = get_custom_waiting_list_wait_time_sec(custom_waiting_list_item_p, &wait_time_sec, show_logs);
+        StatusType wait_time_sec_result = get_custom_waiting_list_wait_time_sec(custom_waiting_list_item_p, &wait_time_sec);
         if (wait_time_sec_result != CORRECT_VALUE)
         {
             continue;
@@ -494,7 +612,7 @@ StatusType validate_custom_waiting_list(cJSON *json, int *local_vehicle_capacity
     return CORRECT_VALUE;
 }
 
-int get_default_fuel_needed(cJSON *vehicle_p, int *default_fuel_needed, _Bool show_logs)
+int get_default_fuel_needed(cJSON *vehicle_p, int *default_fuel_needed)
 {
     StatusType default_fuel_needed_result = get_int_value(vehicle_p, default_fuel_needed, "default_fuel_needed");
     if (default_fuel_needed_result == NOT_FOUND)
@@ -537,7 +655,7 @@ int get_default_fuel_needed(cJSON *vehicle_p, int *default_fuel_needed, _Bool sh
     return 1;
 }
 
-int get_default_wait_time_sec(cJSON *vehicle_p, int *default_wait_time_sec, _Bool show_logs)
+int get_default_wait_time_sec(cJSON *vehicle_p, int *default_wait_time_sec)
 {
     StatusType default_wait_time_sec_result = get_int_value(vehicle_p, default_wait_time_sec, "default_wait_time_sec");
     if (default_wait_time_sec_result == NOT_FOUND)
@@ -572,7 +690,7 @@ int get_default_wait_time_sec(cJSON *vehicle_p, int *default_wait_time_sec, _Boo
     return 1;
 }
 
-int get_default_count(cJSON *vehicle_p, int *default_count, _Bool show_logs)
+int get_default_count(cJSON *vehicle_p, int *default_count)
 {
     StatusType default_wait_time_sec_result = get_int_value(vehicle_p, default_count, "default_count");
     if (default_wait_time_sec_result == NOT_FOUND)
@@ -627,26 +745,26 @@ StatusType validate_vehicles(cJSON *vehicles_array_p, int *all_vehicles_length, 
         {
             printf("---------------------------------------------Level 1: START\n");
         }
-        VehicleType vehicle_type = get_vehicle_type(vehicle_p, show_logs);
+        VehicleType vehicle_type = get_vehicle_type(vehicle_p);
         if (vehicle_type == VEHICLE_NOT_FOUND)
         {
             continue;
         }
 
         int default_fuel_needed = 0;
-        if (get_default_fuel_needed(vehicle_p, &default_fuel_needed, show_logs) == 0)
+        if (get_default_fuel_needed(vehicle_p, &default_fuel_needed) == 0)
         {
             continue;
         }
 
         int default_wait_time_sec = 0;
-        if (get_default_wait_time_sec(vehicle_p, &default_wait_time_sec, show_logs) == 0)
+        if (get_default_wait_time_sec(vehicle_p, &default_wait_time_sec) == 0)
         {
             continue;
         }
 
         int default_count = 0;
-        if (get_default_count(vehicle_p, &default_count, show_logs) == 0)
+        if (get_default_count(vehicle_p, &default_count) == 0)
         {
             continue;
         }
@@ -783,26 +901,26 @@ StatusType get_all_vehicles(cJSON *json, UserJsonResult *json_result)
             printf("\n");
             printf("---------------------------------------------Level 1: START\n");
         }
-        VehicleType vehicle_type = get_vehicle_type(vehicle_p, show_logs);
+        VehicleType vehicle_type = get_vehicle_type(vehicle_p);
         if (vehicle_type == VEHICLE_NOT_FOUND)
         {
             continue;
         }
 
         int default_fuel_needed = 0;
-        if (get_default_fuel_needed(vehicle_p, &default_fuel_needed, show_logs) == 0)
+        if (get_default_fuel_needed(vehicle_p, &default_fuel_needed) == 0)
         {
             continue;
         }
 
         int default_wait_time_sec = 0;
-        if (get_default_wait_time_sec(vehicle_p, &default_wait_time_sec, show_logs) == 0)
+        if (get_default_wait_time_sec(vehicle_p, &default_wait_time_sec) == 0)
         {
             continue;
         }
 
         int default_count = 0;
-        if (get_default_count(vehicle_p, &default_count, show_logs) == 0)
+        if (get_default_count(vehicle_p, &default_count) == 0)
         {
             continue;
         }
@@ -869,52 +987,6 @@ StatusType get_all_vehicles(cJSON *json, UserJsonResult *json_result)
 
     return CORRECT_VALUE;
 }
-
-void print_json_result(UserJsonResult *json_result)
-{
-    if (json_result == NULL)
-    {
-        printf("❌ json_result is empty\n");
-        return;
-    }
-    // printf("\nData from user:\n");
-    printf("✅ [fuel_pumps_count]: %d\n", json_result->fuel_pumps_count);
-    printf("✅ [initial_fuel_in_tanker]: %d\n", json_result->initial_fuel_in_tanker);
-    printf("✅ [fuel_transfer_rate]: %d\n", json_result->fuel_transfer_rate);
-    printf("✅ [max_vehicle_capacity]: %d\n", json_result->max_vehicle_capacity);
-    printf("✅ [randomize_arrival]: %s\n", json_result->randomize_arrival == 0 ? "false" : "true");
-
-    if (json_result->result_vehicles == NULL)
-    {
-        printf("❌ json_result->result_vehicles is empty\n");
-        return;
-    }
-    printf("\n");
-    printf("List of cars:\n");
-    for (int i = 0; i < json_result->result_vehicles_length; i++)
-    {
-        if (json_result->result_vehicles[i]->vehicle_type == VEHICLE_VAN)
-        {
-            printf("🚙 #%d:\n", i + 1);
-        }
-        if (json_result->result_vehicles[i]->vehicle_type == VEHICLE_TRUCK)
-        {
-            printf("🚛 #%d:\n", i + 1);
-        }
-        if (json_result->result_vehicles[i]->vehicle_type == VEHICLE_AUTO)
-        {
-            printf("🚗 #%d:\n", i + 1);
-        }
-        printf("------------------------------\n");
-        printf("🛢️  fuel_needed: %d liters\n", json_result->result_vehicles[i]->fuel_needed);
-        printf("⏳ wait_time_sec: %d seconds\n", json_result->result_vehicles[i]->wait_time_sec);
-        printf("------------------------------\n");
-        printf("\n");
-    }
-}
-
-char *buffer = NULL;
-cJSON *json = NULL;
 
 void clean_up()
 {
@@ -1138,20 +1210,6 @@ int handle_get_limited_amount(UserJsonResult **json_result, ReadDataParserResult
         return 0;
     }
     return 1;
-}
-
-void clean_up_read_data_parser_result(ReadDataParserResult **read_data_parser_result)
-{
-    if (*read_data_parser_result == NULL)
-    {
-        return;
-    }
-
-    clean_up_json_result(
-        &((*read_data_parser_result)->json_result) //
-    );
-    free((*read_data_parser_result));
-    *read_data_parser_result = NULL;
 }
 
 int handle_fuel_pumps_count(int *fuel_pumps_count, UserJsonResult **json_result, ReadDataParserResult **read_data_parser_result)
@@ -1552,76 +1610,59 @@ int get_result_vehicles(UserJsonResult **json_result, ReadDataParserResult **rea
     return 1;
 }
 
-ReadDataParserResult *read_data_parser(char *path)
+void print_json_result(UserJsonResult *json_result)
 {
-    if (path == NULL)
+    if (json_result == NULL)
     {
-        printf("❌ Path string is empty\n");
-        return NULL;
+        printf("❌ json_result is empty\n");
+        return;
+    }
+    // printf("\nData from user:\n");
+    printf("✅ [fuel_pumps_count]: %d\n", json_result->fuel_pumps_count);
+    printf("✅ [initial_fuel_in_tanker]: %d\n", json_result->initial_fuel_in_tanker);
+    printf("✅ [fuel_transfer_rate]: %d\n", json_result->fuel_transfer_rate);
+    printf("✅ [max_vehicle_capacity]: %d\n", json_result->max_vehicle_capacity);
+    printf("✅ [randomize_arrival]: %s\n", json_result->randomize_arrival == 0 ? "false" : "true");
+
+    if (json_result->result_vehicles == NULL)
+    {
+        printf("❌ json_result->result_vehicles is empty\n");
+        return;
+    }
+    printf("\n");
+    printf("List of cars:\n");
+    for (int i = 0; i < json_result->result_vehicles_length; i++)
+    {
+        if (json_result->result_vehicles[i]->vehicle_type == VEHICLE_VAN)
+        {
+            printf("🚙 #%d:\n", i + 1);
+        }
+        if (json_result->result_vehicles[i]->vehicle_type == VEHICLE_TRUCK)
+        {
+            printf("🚛 #%d:\n", i + 1);
+        }
+        if (json_result->result_vehicles[i]->vehicle_type == VEHICLE_AUTO)
+        {
+            printf("🚗 #%d:\n", i + 1);
+        }
+        printf("------------------------------\n");
+        printf("🛢️  fuel_needed: %d liters\n", json_result->result_vehicles[i]->fuel_needed);
+        printf("⏳ wait_time_sec: %d seconds\n", json_result->result_vehicles[i]->wait_time_sec);
+        printf("------------------------------\n");
+        printf("\n");
+    }
+}
+
+void clean_up_read_data_parser_result(ReadDataParserResult **read_data_parser_result)
+{
+    if (*read_data_parser_result == NULL)
+    {
+        return;
     }
 
-    ReadDataParserResult *read_data_parser_result = NULL;
-    if (handle_read_data_parser_result_creation(&read_data_parser_result) == 0)
-    {
-        return NULL;
-    }
-
-    if (handle_get_file_buffer(path, &read_data_parser_result) == 0)
-    {
-        return read_data_parser_result;
-    }
-
-    if (handle_parse_file_buffer(&read_data_parser_result) == 0)
-    {
-        return read_data_parser_result;
-    }
-
-    UserJsonResult *json_result = NULL;
-    if (handle_json_result_creation(&json_result, &read_data_parser_result) == 0)
-    {
-        return read_data_parser_result;
-    }
-
-    int fuel_pumps_count = 0;
-    if (handle_fuel_pumps_count(&fuel_pumps_count, &json_result, &read_data_parser_result) == 0)
-    {
-        return read_data_parser_result;
-    }
-
-    _Bool randomize_arrival = 0;
-    if (handle_randomize_arrival(&randomize_arrival, &json_result, &read_data_parser_result) == 0)
-    {
-        return read_data_parser_result;
-    }
-
-    int max_vehicle_capacity = 0;
-    if (handle_max_vehicle_capacity(&max_vehicle_capacity, &json_result, &read_data_parser_result) == 0)
-    {
-        return read_data_parser_result;
-    }
-
-    int initial_fuel_in_tanker = 0;
-    if (handle_initial_fuel_in_tanker(&initial_fuel_in_tanker, &json_result, &read_data_parser_result) == 0)
-    {
-        return read_data_parser_result;
-    }
-
-    int fuel_transfer_rate = 0;
-    if (handle_fuel_transfer_rate(&fuel_transfer_rate, &json_result, &read_data_parser_result) == 0)
-    {
-        return read_data_parser_result;
-    }
-
-    if (handle_get_all_vehicles(&json_result, &read_data_parser_result) == 0)
-    {
-        return read_data_parser_result;
-    }
-
-    if (get_result_vehicles(&json_result, &read_data_parser_result) == 0)
-    {
-        return read_data_parser_result;
-    }
-
-    clean_up();
-    return read_data_parser_result;
+    clean_up_json_result(
+        &((*read_data_parser_result)->json_result) //
+    );
+    free((*read_data_parser_result));
+    *read_data_parser_result = NULL;
 }

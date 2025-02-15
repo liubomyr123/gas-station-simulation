@@ -64,9 +64,7 @@ typedef struct
 } ReadDataParserResult;
 
 void print_json_result(UserJsonResult *json_result);
-
 void clean_up_read_data_parser_result(ReadDataParserResult **read_data_parser_result);
-
 ReadDataParserResult *read_data_parser(char *path);
 
 #endif
