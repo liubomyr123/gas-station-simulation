@@ -11,6 +11,7 @@
         "algorithm": "c",
         "array": "c",
         "util_read_data_parser.h": "c",
-        "cjson.h": "c"
+        "cjson.h": "c",
+        "string.h": "c"
     }
 }
