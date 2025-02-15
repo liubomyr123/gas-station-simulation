@@ -255,7 +255,7 @@ void *car(void *thread_data)
 int read_json()
 {
     char *path = "data.json";
-    read_data_parser_result = read_data_parser(path);
+    read_data_parser_result = read_data_parser(path, false);
     if (read_data_parser_result == NULL)
     {
         printf("❌ read_data_parser_result is empty\n");

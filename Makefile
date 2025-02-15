@@ -17,11 +17,17 @@ DEBUG_DEFINE_FLAGS = $(addprefix -D, $(DEBUG_FLAGS))
 # Name of the output executable
 TARGET = gas_station
 
+# Validation output executable
+VALIDATION_TARGET = validation
+
 # cjson `.c` source files
 CJSON_SRCS = cjson/cJSON.c
 
-# Find all `.c` source files in the current directory
-SRCS = $(wildcard *.c) $(CJSON_SRCS)
+# All `.c` source files in the current directory for simulation
+SRCS = main.c utils.c util_read_data_parser.c $(CJSON_SRCS)
+
+# All `.c` files for validation script
+VALIDATION_SRCS = validate_json_file.c util_read_data_parser.c $(CJSON_SRCS)
 
 # Default target: compile the program
 all: $(TARGET)
@@ -41,13 +47,17 @@ start: all run
 debug: $(SRCS)
 	$(CC) $(CFLAGS) $(DEBUG_DEFINE_FLAGS) -o $(TARGET) $(SRCS)
 
+# Run validation script for data.json file
+validate: ${VALIDATION_SRCS}
+	$(CC) ${CFLAGS} -o ${VALIDATION_TARGET} ${VALIDATION_SRCS}
+
 # Rule for compiling with DEBUG_ and running the program (debug and run)
 start_debug: debug
 	./$(TARGET)
 
 # Clean up generated files
 clean:
-	rm -f $(TARGET) $(OBJS) *.d
+	rm -f $(TARGET) ${VALIDATION_TARGET} $(OBJS) *.d
 
 # Define targets that are not actual files
 .PHONY: all clean run start

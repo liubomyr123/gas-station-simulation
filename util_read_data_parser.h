@@ -65,6 +65,6 @@ typedef struct
 
 void print_json_result(UserJsonResult *json_result);
 void clean_up_read_data_parser_result(ReadDataParserResult **read_data_parser_result);
-ReadDataParserResult *read_data_parser(char *path);
+ReadDataParserResult *read_data_parser(char *path, _Bool show_logs);
 
 #endif
