@@ -263,6 +263,8 @@ int read_json()
     )
     {
         printf("❌ Failed to parse 'data.json' file.\n");
+        printf("\n");
+        printf("💡 Try running validation command. It will check the file for errors and provide detailed validation results.\n");
         clean_up_read_data_parser_result(&read_data_parser_result);
         return 1;
     }
