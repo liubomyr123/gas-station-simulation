@@ -5,24 +5,21 @@
 #endif
 
 #include <stdio.h>
-
 #include "util_read_data_parser.h"
 
-static ReadDataParserResult *read_data_parser_result = NULL;
-
-int read_json()
+int main()
 {
     char *path = "data.json";
-    read_data_parser_result = read_data_parser(path, true);
+    ReadDataParserResult *read_data_parser_result = read_data_parser(path, true);
     if (read_data_parser_result == NULL)
     {
-        printf("❌ read_data_parser_result is empty\n");
+        printf("❌ [read_data_parser_result] is empty\n");
         clean_up_read_data_parser_result(&read_data_parser_result);
         return 1;
     }
     if (read_data_parser_result->json_result == NULL)
     {
-        printf("❌ read_data_parser_result->json_result is empty\n");
+        printf("❌ [read_data_parser_result->json_result] is empty\n");
         clean_up_read_data_parser_result(&read_data_parser_result);
         return 1;
     }
@@ -74,25 +71,27 @@ int read_json()
         clean_up_read_data_parser_result(&read_data_parser_result);
         return 1;
     }
-    if (read_data_parser_result->status == CORRECT_VALUE)
+    if (read_data_parser_result->status == MAX_VALUE_ERROR)
     {
-        // printf("✅ CORRECT_VALUE\n");
-    }
-
-    // printf("JSON data: \n");
-    // print_json_result(read_data_parser_result->json_result);
-
-    return 0;
-}
-
-int main()
-{
-    int read_json_result = read_json();
-    if (read_json_result == 1)
-    {
+        printf("❌ MAX_VALUE_ERROR\n");
+        clean_up_read_data_parser_result(&read_data_parser_result);
         return 1;
     }
-  
+    if (read_data_parser_result->status == VALIDATION_ERROR)
+    {
+        printf("❌ VALIDATION_ERROR\n");
+        clean_up_read_data_parser_result(&read_data_parser_result);
+        return 1;
+    }
+    if (read_data_parser_result->status != CORRECT_VALUE)
+    {
+        printf("❌ Failed to parse 'data.json' file.\n");
+        clean_up_read_data_parser_result(&read_data_parser_result);
+        return 1;
+    }
+    printf("\n");
+    printf("✅ Successfully parsed 'data.json' file.\n");
+    print_json_result(read_data_parser_result->json_result);
     clean_up_read_data_parser_result(&read_data_parser_result);
     return 0;
 }

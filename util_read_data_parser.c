@@ -1775,6 +1775,14 @@ StatusType get_custom_waiting_list_wait_time_sec(cJSON *custom_waiting_list_item
 void print_json_result(UserJsonResult *json_result)
 {
     printf("\n");
+    printf("🛠️  Simulation Constraints:\n");
+    printf("   🚘 Maximum number of vehicles allowed: %d.\n", MAX_VEHICLES);
+    printf("   ⛽ Maximum fuel pumps allowed: %d.\n", MAX_FUEL_PUMPS_COUNT);
+    printf("   🛢️  Tanker can hold up to %d liters of fuel.\n", MAX_INITIAL_FUEL_IN_TANKER);
+    printf("   🔄 Fuel Transfer Speed: Max %d liters/sec", MAX_FUEL_TRANSFER_RATE);
+
+    printf("\n");
+    printf("\n");
     printf("📋 JSON data: \n");
     if (json_result == NULL)
     {
@@ -1785,13 +1793,15 @@ void print_json_result(UserJsonResult *json_result)
     printf("   ├─ ✅ Initial tanker fuel: %d\n", json_result->initial_fuel_in_tanker);
     printf("   ├─ ✅ Fuel transfer rate: %d\n", json_result->fuel_transfer_rate);
     printf("   ├─ ✅ Max vehicle capacity: %d\n", json_result->max_vehicle_capacity);
-    printf("   └─ ✅ Randomized arrival: %s\n", json_result->randomize_arrival == 0 ? "false" : "true");
+    printf("   ├─ ✅ Randomized arrival: %s\n", json_result->randomize_arrival == 0 ? "false" : "true");
 
     if (json_result->result_vehicles == NULL)
     {
         printf("   └─ ❌ List of cars is empty.\n");
         return;
     }
+
+    printf("   └─ ✅ Total vehicles: %d\n", json_result->result_vehicles_length);\
 
     printf("\n");
     printf("📋 List of cars:\n");
