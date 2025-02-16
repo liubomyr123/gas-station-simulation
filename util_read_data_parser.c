@@ -948,7 +948,7 @@ int handle_result_vehicles(UserJsonResult **json_result, ReadDataParserResult **
     {
         if (SHOW_LOGS)
         {
-            printf("✅ Program will use %d vehicles out of the %d total allowed.\n",
+            printf("✅ Program will use %d vehicles out of the %d max specified.\n",
                    (*json_result)->all_vehicles_length,
                    (*json_result)->max_vehicle_capacity);
         }

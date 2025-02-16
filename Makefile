@@ -55,6 +55,16 @@ validate: ${VALIDATION_SRCS}
 start_debug: debug
 	./$(TARGET)
 
+start_validate: validate
+	@echo -n "\n📄 Enter the file name (or leave empty for none): "; \
+	read -r ARGS; \
+	if [ -z "$$ARGS" ]; then \
+		echo "\n🧐 No arguments provided. Program is going to use default 'data.json' file.\n"; \
+	else \
+		echo "\n✅ You entered: $$ARGS.\n"; \
+	fi; \
+	eval ./$(VALIDATION_TARGET) $$ARGS
+
 # Clean up generated files
 clean:
 	rm -f $(TARGET) ${VALIDATION_TARGET} $(OBJS) *.d
