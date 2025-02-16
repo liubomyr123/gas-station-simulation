@@ -13,6 +13,7 @@
         "util_read_data_parser.h": "c",
         "cjson.h": "c",
         "string.h": "c",
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "types.h": "c"
     }
 }

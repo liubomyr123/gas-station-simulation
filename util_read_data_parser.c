@@ -411,7 +411,7 @@ void clean_up()
 {
     if (SHOW_LOGS)
     {
-        printf("\n🧹 Cleaning up...\n");
+        printf("\n🧹 Cleaning up parser script...\n");
     }
     if (buffer != NULL)
     {
@@ -419,7 +419,7 @@ void clean_up()
         buffer = NULL;
         if (SHOW_LOGS)
         {
-            printf("✅ Buffer cleaned up\n");
+            printf("   ├─ ✅ Buffer cleaned up\n");
         }
     }
     if (json != NULL)
@@ -427,7 +427,7 @@ void clean_up()
         cJSON_Delete(json);
         if (SHOW_LOGS)
         {
-            printf("✅ JSON cleaned up!\n");
+            printf("   └─ ✅ JSON cleaned up!\n");
         }
     }
 }
@@ -466,7 +466,7 @@ void clean_up_json_result(UserJsonResult **json_result)
     (*json_result) = NULL;
     if (SHOW_LOGS)
     {
-        printf("✅ Cleaning data results finished!\n");
+        printf("   ├─ ✅ Cleaning data results finished!\n");
     }
 }
 
@@ -484,7 +484,7 @@ void clean_up_read_data_parser_result(ReadDataParserResult **read_data_parser_re
     *read_data_parser_result = NULL;
     if (SHOW_LOGS)
     {
-        printf("✅ Cleaning user results finished!\n");
+        printf("   ├─ ✅ Cleaning user results finished!\n");
     }
 }
 
