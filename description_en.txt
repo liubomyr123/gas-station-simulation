@@ -1,3 +1,7 @@
+Outdated. Needs update.
+Please, look at description_ua.txt instead.
+
+
 JSON File Requirements for the Program:
 
 This file contains information about its fields that will define the program's behavior.
