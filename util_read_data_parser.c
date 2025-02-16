@@ -1375,7 +1375,7 @@ StatusType get_all_vehicles(cJSON *json, UserJsonResult *json_result)
             }
             continue;
         }
-        if (custom_waiting_list_result == EMPTY_VALUE || custom_waiting_list_result == NOT_FOUND)
+        if (custom_waiting_list_result == EMPTY_VALUE || custom_waiting_list_result == NOT_FOUND || custom_waiting_list_result == WRONG_VALUE)
         {
             for (int i = 0; i < default_count; i++)
             {
@@ -1543,6 +1543,7 @@ int get_default_count(cJSON *vehicle_p, int *default_count, _Bool show_logs_now)
 
 StatusType get_custom_waiting_list(cJSON *json, VehicleType vehicle_type, int default_wait_time_sec, int default_fuel_needed, Vehicle **all_user_vehicles, int *count_added_vehicles, _Bool show_logs_now)
 {
+    int local_vehicle_capacity = 0;
     if (vehicle_type == VEHICLE_NOT_FOUND)
     {
         return UNKNOWN_ERROR;
@@ -1578,12 +1579,6 @@ StatusType get_custom_waiting_list(cJSON *json, VehicleType vehicle_type, int de
             // printf("\n");
             // printf("--------------------------------Level 2: START\n");
         }
-        int count = 0;
-        StatusType count_result = get_custom_waiting_list_count(custom_waiting_list_item_p, &count, false);
-        if (count_result != CORRECT_VALUE)
-        {
-            continue;
-        }
 
         int fuel_needed = 0;
         StatusType fuel_needed_result = get_custom_waiting_list_fuel_needed(custom_waiting_list_item_p, &fuel_needed, false);
@@ -1607,6 +1602,14 @@ StatusType get_custom_waiting_list(cJSON *json, VehicleType vehicle_type, int de
             continue;
         }
 
+        int count = 0;
+        StatusType count_result = get_custom_waiting_list_count(custom_waiting_list_item_p, &count, false);
+        if (count_result != CORRECT_VALUE)
+        {
+            continue;
+        }
+
+        local_vehicle_capacity += count;
         for (int i = 0; i < count; i++)
         {
             Vehicle *new_vehicle = (Vehicle *)malloc(sizeof(Vehicle));
@@ -1646,6 +1649,10 @@ StatusType get_custom_waiting_list(cJSON *json, VehicleType vehicle_type, int de
         }
     }
 
+    if (local_vehicle_capacity == 0)
+    {
+        return WRONG_VALUE;
+    }
     return CORRECT_VALUE;
 }
 
