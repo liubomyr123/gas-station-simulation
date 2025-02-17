@@ -26,6 +26,7 @@ typedef struct
 {
     int number;
     int waiting_time;
+    int fuel_pump_id;
     VehicleType vehicle_type;
     time_t start_waiting_time;
     time_t end_waiting_time;
@@ -44,13 +45,14 @@ typedef struct
 void init_attributes_with_min_stack_size(pthread_attr_t *attributes_p);
 int setup_main();
 void clean_up_main();
-int occupy_new_fuel_pump(int car_id, VehicleType vehicle_type);
+int occupy_new_fuel_pump(int car_id, VehicleType vehicle_type, Car *car_data);
 int free_fuel_pump(int car_id, VehicleType vehicle_type);
 int get_number_of_free_fuel_pumps();
 int get_number_of_occupied_fuel_pumps();
 void print_statistics(Car *cars, Tanker *tankers);
 void print_tanker_statistics(Tanker *tankers);
 void print_car_statistics(Car *cars);
+void print_fuel_pumps_statistics(Car *cars);
 int read_json();
 int init_simulation_data();
 
@@ -121,6 +123,7 @@ void *car(void *thread_data)
     int car_id = car_data->number;
     int car_waiting_time = car_data->waiting_time;
     int car_fuel_required = car_data->fuel_required;
+    // int fuel_pump_id = car_data->fuel_pump_id;
     VehicleType vehicle_type = car_data->vehicle_type;
 
     sem_wait(&fuel_pump_semaphore);
@@ -131,7 +134,7 @@ void *car(void *thread_data)
     car_data->start_waiting_time = time(NULL);
     pthread_mutex_lock(&dynamic_lock); // 🔒
 
-    occupy_new_fuel_pump(car_id, vehicle_type);
+    occupy_new_fuel_pump(car_id, vehicle_type, car_data);
 
     int is_time_passed = 0;
     if (total_fuel_left + gas_station_fuel_storage < car_fuel_required)
@@ -268,6 +271,7 @@ int main()
         cars[i].number = car_id;
         cars[i].waiting_time = current_vehicle->wait_time_sec;
         cars[i].fuel_required = current_vehicle->fuel_needed;
+        cars[i].fuel_pump_id = -1;
         cars[i].is_left_without_fuel = false;
         cars[i].vehicle_type = current_vehicle->vehicle_type;
 
@@ -395,7 +399,7 @@ int get_number_of_occupied_fuel_pumps()
     return occupied_fuel_pumps;
 }
 
-int occupy_new_fuel_pump(int car_id, VehicleType vehicle_type)
+int occupy_new_fuel_pump(int car_id, VehicleType vehicle_type, Car *car_data)
 {
     fuel_pump_occupied++;
     int occupied_fuel_pump = -1;
@@ -423,6 +427,7 @@ int occupy_new_fuel_pump(int car_id, VehicleType vehicle_type)
             }
             fuel_pumps_list[i] = car_id;
             occupied_fuel_pump = i;
+            car_data->fuel_pump_id = i;
             break;
         }
     }
@@ -479,26 +484,75 @@ void print_car_statistics(Car *cars)
 {
     double total_waiting_time = 0;
     double total_fuel = 0;
+    int unserviced_vehicles = 0;
+    int serviced_vehicles = 0;
     for (int i = 0; i < number_of_cars; i++)
     {
         double waiting_time = difftime(cars[i].end_waiting_time, cars[i].start_waiting_time);
         if (cars[i].is_left_without_fuel)
         {
-            printf("❌ Car #%d left without refueling after: %.2f seconds\n", cars[i].number, waiting_time);
+            unserviced_vehicles++;
+
+            printf("Car #%d: \n", cars[i].number);
+            printf("   ├─ ❌ Left without fuel.\n");
+            if (cars[i].fuel_pump_id != -1)
+            {
+                printf("   ├─ ⛽️ Tried to refuel on fuel pump #%d.\n", cars[i].fuel_pump_id + 1);
+            }
+            printf("   └─ ⏳ Waited %.2f seconds.\n", waiting_time);
+            printf("\n");
         }
         else
         {
-            printf("✅ Car #%d was fully fueled %d liters after: %.2f seconds\n", cars[i].number, cars[i].fuel_required, waiting_time);
+            serviced_vehicles++;
+
+            printf("Car #%d: \n", cars[i].number);
+            printf("   ├─ ✅ Refueled %d liters.\n", cars[i].fuel_required);
+            if (cars[i].fuel_pump_id != -1)
+            {
+                printf("   ├─ ⛽️ On fuel pump #%d.\n", cars[i].fuel_pump_id + 1);
+            }
+            printf("   └─ ⏳ Waited %.2f seconds.\n", waiting_time);
+            printf("\n");
         }
+
         total_waiting_time += waiting_time;
         total_fuel += cars[i].fuel_required;
     }
     double average_waiting_time = total_waiting_time / number_of_cars;
     double average_fuel = total_fuel / number_of_cars;
     printf("\n");
+    printf("🚗 Total cars serviced: %d\n", serviced_vehicles);
+    printf("🚗 Total cars left without fuel: %d\n", unserviced_vehicles);
+    printf("\n");
     printf("⏳ Average car waiting time: %.2f seconds\n", average_waiting_time);
     printf("🛢️  The average fuel per car is: %.2f liters.\n", average_fuel);
     printf("\n");
+}
+
+void print_fuel_pumps_statistics(Car *cars)
+{
+    printf("\n");
+    int fuel_pumps_vehicles[number_of_fuel_pumps];
+    int fuel_pumps_liters[number_of_fuel_pumps];
+    for (int i = 0; i < number_of_fuel_pumps; fuel_pumps_vehicles[i] = 0, fuel_pumps_liters[i] = 0, i++)
+        ;
+
+    for (int i = 0; i < number_of_cars; i++)
+    {
+        if (cars[i].fuel_pump_id != -1 && !cars[i].is_left_without_fuel)
+        {
+            fuel_pumps_vehicles[cars[i].fuel_pump_id]++;
+            fuel_pumps_liters[cars[i].fuel_pump_id] += cars[i].fuel_required;
+        }
+    }
+    for (int i = 0; i < number_of_fuel_pumps; i++)
+    {
+        printf("⛽️ Fuel pump #%d: \n", cars[i].number);
+        printf("   ├─ ✅ Successfully serviced %d vehicles.\n", fuel_pumps_vehicles[i]);
+        printf("   └─ 🛢️  Total fueled %d liters.\n", fuel_pumps_liters[i]);
+        printf("\n");
+    }
 }
 
 void print_tanker_statistics(Tanker *tankers)
@@ -519,7 +573,7 @@ void print_tanker_statistics(Tanker *tankers)
     }
     printf("🔥 Total fuel consumed: %d liters\n", all_tankers_fuel - gas_station_fuel_storage);
     printf("🛢️  Fuel left in storage: %d liters\n", gas_station_fuel_storage);
-    printf("🚚 Total fuel deliveries: %d (%d liters each)\n", all_fuel_deliveries, fuel_per_time);
+    printf("🚚 Total fuel deliveries: %d (<= %d liters each)\n", all_fuel_deliveries, fuel_per_time);
 }
 
 void print_statistics(Car *cars, Tanker *tankers)
@@ -529,6 +583,7 @@ void print_statistics(Car *cars, Tanker *tankers)
     printf("\n");
     print_car_statistics(cars);
     print_tanker_statistics(tankers);
+    print_fuel_pumps_statistics(cars);
     printf("\n");
 }
 

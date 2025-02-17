@@ -2,7 +2,7 @@
     "fuel_pumps_count": 3,
     "randomize_arrival": false,
     "max_vehicle_capacity": 60,
-    "initial_fuel_in_tanker": 50,
+    "initial_fuel_in_tanker": 200,
     "fuel_transfer_rate": 60,
     "vehicles": [
         {
