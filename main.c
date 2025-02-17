@@ -42,8 +42,17 @@ typedef struct
 } Tanker;
 
 void init_attributes_with_min_stack_size(pthread_attr_t *attributes_p);
-void setup_main();
-void clean_up_main(Car *cars, Tanker *tankers);
+int setup_main();
+void clean_up_main();
+int occupy_new_fuel_pump(int car_id, VehicleType vehicle_type);
+int free_fuel_pump(int car_id, VehicleType vehicle_type);
+int get_number_of_free_fuel_pumps();
+int get_number_of_occupied_fuel_pumps();
+void print_statistics(Car *cars, Tanker *tankers);
+void print_tanker_statistics(Tanker *tankers);
+void print_car_statistics(Car *cars);
+int read_json();
+int init_simulation_data();
 
 pthread_mutex_t dynamic_lock = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t dynamic_cond = PTHREAD_COND_INITIALIZER;
@@ -58,6 +67,7 @@ static int tankers_number = 1;
 static int fuel_per_time = 15;
 static int fuel_in_tanker = 150;
 static int fuel_pump_occupied = 0;
+static int *fuel_pumps_list = NULL;
 
 static ReadDataParserResult *read_data_parser_result = NULL;
 
@@ -111,36 +121,19 @@ void *car(void *thread_data)
     int car_id = car_data->number;
     int car_waiting_time = car_data->waiting_time;
     int car_fuel_required = car_data->fuel_required;
-    int vehicle_type = car_data->vehicle_type;
+    VehicleType vehicle_type = car_data->vehicle_type;
 
     sem_wait(&fuel_pump_semaphore);
 
     printf("\n");
     print_car(vehicle_type, car_id, "Attempting to get fuel...\n");
-    // sleep(1);
+
     car_data->start_waiting_time = time(NULL);
     pthread_mutex_lock(&dynamic_lock); // 🔒
 
+    occupy_new_fuel_pump(car_id, vehicle_type);
+
     int is_time_passed = 0;
-
-    fuel_pump_occupied++;
-    if (vehicle_type == VEHICLE_AUTO)
-    {
-        printf("\n⛽️ Fuel pump occupied by 🚗 #%d: %d/%d pumps now in use.\n\n", car_id, fuel_pump_occupied, number_of_fuel_pumps);
-    }
-    else if (vehicle_type == VEHICLE_VAN)
-    {
-        printf("\n⛽️ Fuel pump occupied by 🚙 #%d: %d/%d pumps now in use.\n\n", car_id, fuel_pump_occupied, number_of_fuel_pumps);
-    }
-    else if (vehicle_type == VEHICLE_TRUCK)
-    {
-        printf("\n⛽️ Fuel pump occupied by 🚛 #%d: %d/%d pumps now in use.\n\n", car_id, fuel_pump_occupied, number_of_fuel_pumps);
-    }
-    else
-    {
-        printf("\n⛽️ Fuel pump occupied by 🚗 #%d: %d/%d pumps now in use.\n\n", car_id, fuel_pump_occupied, number_of_fuel_pumps);
-    }
-
     if (total_fuel_left + gas_station_fuel_storage < car_fuel_required)
     {
         car_data->end_waiting_time = time(NULL);
@@ -238,57 +231,26 @@ void *car(void *thread_data)
 
     pthread_mutex_unlock(&dynamic_lock); // 🔓
 
-    fuel_pump_occupied--;
-    if (fuel_pump_occupied == 0)
-    {
-        printf("⛽️ All fuel pumps are free\n");
-    }
-    else
-    {
-        printf("⛽️ Fuel pump freed by 🚗 #%d: %d/%d pumps still occupied.\n", car_id, fuel_pump_occupied, number_of_fuel_pumps);
-    }
-
+    free_fuel_pump(car_id, vehicle_type);
     sem_post(&fuel_pump_semaphore);
     return NULL;
 }
 
-int read_json()
-{
-    char *path = "data.json";
-    read_data_parser_result = read_data_parser(path, false);
-    if (
-        read_data_parser_result == NULL                     //
-        || read_data_parser_result->json_result == NULL     //
-        || read_data_parser_result->status != CORRECT_VALUE //
-    )
-    {
-        printf("❌ Failed to parse 'data.json' file.\n");
-        printf("\n");
-        printf("💡 Try running validation command. It will check the file for errors and provide detailed validation results.\n");
-        clean_up_read_data_parser_result(&read_data_parser_result);
-        return 1;
-    }
-    printf("✅ Successfully parsed 'data.json' file.\n");
-    print_json_result(read_data_parser_result->json_result);
-    return 0;
-}
-
 int main()
 {
-    int read_json_result = read_json();
-    if (read_json_result == 1)
+    if (init_simulation_data() == 0)
     {
+        clean_up_main();
+        return 1;
+    }
+
+    if (setup_main() == 0)
+    {
+        clean_up_main();
         return 1;
     }
 
     printf("🚗 Welcome to the fueling station simulation! 🚗\n");
-
-    number_of_fuel_pumps = read_data_parser_result->json_result->fuel_pumps_count;
-    fuel_per_time = read_data_parser_result->json_result->fuel_transfer_rate;
-    fuel_in_tanker = read_data_parser_result->json_result->initial_fuel_in_tanker;
-    number_of_cars = read_data_parser_result->json_result->result_vehicles_length;
-
-    setup_main();
 
     pthread_t car_threads[number_of_cars];
     Car cars[number_of_cars];
@@ -353,8 +315,164 @@ int main()
         }
     }
 
-    clean_up_main(cars, tankers);
+    print_statistics(cars, tankers);
+    clean_up_main();
     return 0;
+}
+
+int read_json()
+{
+    char *path = "data.json";
+    read_data_parser_result = read_data_parser(path, false);
+    if (
+        read_data_parser_result == NULL                     //
+        || read_data_parser_result->json_result == NULL     //
+        || read_data_parser_result->status != CORRECT_VALUE //
+    )
+    {
+        printf("❌ Failed to parse 'data.json' file.\n");
+        printf("\n");
+        printf("💡 Try running validation command. It will check the file for errors and provide detailed validation results.\n");
+        clean_up_read_data_parser_result(&read_data_parser_result);
+        return 0;
+    }
+    printf("✅ Successfully parsed 'data.json' file.\n");
+    print_json_result(read_data_parser_result->json_result);
+    return 1;
+}
+
+int init_simulation_data()
+{
+    int read_json_result = read_json();
+    if (read_json_result == 0)
+    {
+        return 0;
+    }
+
+    number_of_fuel_pumps = read_data_parser_result->json_result->fuel_pumps_count;
+    fuel_per_time = read_data_parser_result->json_result->fuel_transfer_rate;
+    fuel_in_tanker = read_data_parser_result->json_result->initial_fuel_in_tanker;
+    number_of_cars = read_data_parser_result->json_result->result_vehicles_length;
+
+    fuel_pumps_list = (int *)malloc(number_of_fuel_pumps * sizeof(int));
+    if (fuel_pumps_list == NULL)
+    {
+        printf("❌ Failed to allocate memory for fuel pumps list.\n");
+        return 0;
+    }
+
+    for (int i = 0; i < number_of_fuel_pumps; i++)
+    {
+        fuel_pumps_list[i] = -1;
+    }
+
+    return 1;
+}
+
+int get_number_of_free_fuel_pumps()
+{
+    int free_fuel_pumps = 0;
+    for (int i = 0; i < number_of_fuel_pumps; i++)
+    {
+        if (fuel_pumps_list[i] == -1)
+        {
+            free_fuel_pumps++;
+        }
+    }
+    return free_fuel_pumps;
+}
+
+int get_number_of_occupied_fuel_pumps()
+{
+    int occupied_fuel_pumps = 0;
+    for (int i = 0; i < number_of_fuel_pumps; i++)
+    {
+        if (fuel_pumps_list[i] != -1)
+        {
+            occupied_fuel_pumps++;
+        }
+    }
+    return occupied_fuel_pumps;
+}
+
+int occupy_new_fuel_pump(int car_id, VehicleType vehicle_type)
+{
+    fuel_pump_occupied++;
+    int occupied_fuel_pump = -1;
+    for (int i = 0; i < number_of_fuel_pumps; i++)
+    {
+        if (fuel_pumps_list[i] == -1)
+        {
+            if (vehicle_type == VEHICLE_AUTO)
+            {
+                printf("\n⛽️ Fuel pump #%d occupied by 🚗 #%d: %d/%d pumps now in use.\n\n",
+                       i + 1,
+                       car_id, fuel_pump_occupied, number_of_fuel_pumps);
+            }
+            else if (vehicle_type == VEHICLE_VAN)
+            {
+                printf("\n⛽️ Fuel pump #%d occupied by 🚙 #%d: %d/%d pumps now in use.\n\n",
+                       i + 1,
+                       car_id, fuel_pump_occupied, number_of_fuel_pumps);
+            }
+            else if (vehicle_type == VEHICLE_TRUCK)
+            {
+                printf("\n⛽️ Fuel pump #%d occupied by 🚛 #%d: %d/%d pumps now in use.\n\n",
+                       i + 1,
+                       car_id, fuel_pump_occupied, number_of_fuel_pumps);
+            }
+            fuel_pumps_list[i] = car_id;
+            occupied_fuel_pump = i;
+            break;
+        }
+    }
+
+    if (get_number_of_occupied_fuel_pumps() == number_of_fuel_pumps)
+    {
+        printf("⛽️ All fuel pumps are occupied.\n");
+    }
+
+    return occupied_fuel_pump;
+}
+
+int free_fuel_pump(int car_id, VehicleType vehicle_type)
+{
+    fuel_pump_occupied--;
+    int released_fuel_pump = -1;
+    for (int i = 0; i < number_of_fuel_pumps; i++)
+    {
+        if (fuel_pumps_list[i] == car_id)
+        {
+            if (vehicle_type == VEHICLE_AUTO)
+            {
+                printf("⛽️ Fuel pump #%d freed by 🚗 #%d: %d/%d pumps still occupied.\n",
+                       i + 1,
+                       car_id, fuel_pump_occupied, number_of_fuel_pumps);
+            }
+            else if (vehicle_type == VEHICLE_VAN)
+            {
+                printf("⛽️ Fuel pump #%d freed by 🚙 #%d: %d/%d pumps still occupied.\n",
+                       i + 1,
+                       car_id, fuel_pump_occupied, number_of_fuel_pumps);
+            }
+            else if (vehicle_type == VEHICLE_TRUCK)
+            {
+                printf("⛽️ Fuel pump #%d freed by 🚛 #%d: %d/%d pumps still occupied.\n",
+                       i + 1,
+                       car_id, fuel_pump_occupied, number_of_fuel_pumps);
+            }
+            fuel_pumps_list[i] = -1;
+            released_fuel_pump = i;
+            break;
+        }
+    }
+
+    if (get_number_of_free_fuel_pumps() == number_of_fuel_pumps)
+    {
+        printf("⛽️ All fuel pumps are free.\n");
+    }
+
+    return released_fuel_pump;
 }
 
 void print_car_statistics(Car *cars)
@@ -401,8 +519,7 @@ void print_tanker_statistics(Tanker *tankers)
     }
     printf("🔥 Total fuel consumed: %d liters\n", all_tankers_fuel - gas_station_fuel_storage);
     printf("🛢️  Fuel left in storage: %d liters\n", gas_station_fuel_storage);
-    printf("🚚 Total fuel deliveries: %d\n", all_fuel_deliveries);
-    printf("💧 Tankers refuel %d liters at a time\n", fuel_per_time);
+    printf("🚚 Total fuel deliveries: %d (%d liters each)\n", all_fuel_deliveries, fuel_per_time);
 }
 
 void print_statistics(Car *cars, Tanker *tankers)
@@ -415,13 +532,25 @@ void print_statistics(Car *cars, Tanker *tankers)
     printf("\n");
 }
 
-void setup_main()
+int setup_main()
 {
     start_time = time(NULL);
 
-    pthread_mutex_init(&dynamic_lock, NULL);
-    pthread_cond_init(&dynamic_cond, NULL);
-    sem_init(&fuel_pump_semaphore, 0, number_of_fuel_pumps);
+    if (pthread_mutex_init(&dynamic_lock, NULL) != 0)
+    {
+        printf("❌ Failed to init mutex.\n");
+        return 0;
+    }
+    if (pthread_cond_init(&dynamic_cond, NULL) != 0)
+    {
+        printf("❌ Failed to init condition variables.\n");
+        return 0;
+    }
+    if (sem_init(&fuel_pump_semaphore, 0, number_of_fuel_pumps) != 0)
+    {
+        printf("❌ Failed to init semaphore.\n");
+        return 0;
+    }
 
 #ifdef DEBUG_
     print_thread_stack_size_info();
@@ -433,16 +562,32 @@ void setup_main()
 #ifdef DEBUG_
     printf("\n");
 #endif
+
+    return 1;
 }
 
-void clean_up_main(Car *cars, Tanker *tankers)
+void clean_up_main()
 {
-    pthread_mutex_destroy(&dynamic_lock);
-    pthread_cond_destroy(&dynamic_cond);
-    sem_destroy(&fuel_pump_semaphore);
+    if (pthread_mutex_destroy(&dynamic_lock) != 0)
+    {
+        printf("❌ Failed to destroy mutex.\n");
+    }
+    if (pthread_cond_destroy(&dynamic_cond) != 0)
+    {
+        printf("❌ Failed to destroy condition variables.\n");
+    }
+    if (sem_destroy(&fuel_pump_semaphore) != 0)
+    {
+        printf("❌ Failed to destroy semaphore.\n");
+    }
+
     clean_up_read_data_parser_result(&read_data_parser_result);
 
-    print_statistics(cars, tankers);
+    if (fuel_pumps_list != NULL)
+    {
+        free(fuel_pumps_list);
+        fuel_pumps_list = NULL;
+    }
 
 #ifdef DEBUG_
     print_total_simulation_time();

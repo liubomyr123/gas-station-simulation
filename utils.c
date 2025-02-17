@@ -218,7 +218,7 @@ void print_total_simulation_time()
 {
     time_t end_time = time(NULL);
     double elapsed_time = difftime(end_time, start_time);
-    print_debug("Total simulation time: %.2f seconds", elapsed_time);
+    print_debug("⏳ Total simulation time: %.2f seconds", elapsed_time);
 }
 
 void init_attributes_with_min_stack_size(pthread_attr_t *attributes_p)
