@@ -143,10 +143,7 @@ ReadDataParserResult *read_data_parser(char *path, _Bool show_logs)
         return read_data_parser_result;
     }
 
-    if (show_logs == true)
-    {
-        clean_up();
-    }
+    clean_up();
     return read_data_parser_result;
 }
 
@@ -425,6 +422,7 @@ void clean_up()
     if (json != NULL)
     {
         cJSON_Delete(json);
+        json = NULL;
         if (SHOW_LOGS)
         {
             printf("   └─ ✅ JSON cleaned up!\n");
