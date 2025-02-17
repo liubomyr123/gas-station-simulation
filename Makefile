@@ -43,17 +43,23 @@ run: $(TARGET)
 # Build and then run the program in one step
 start: all run
 
+valgrind: 
+	valgrind --tool=memcheck --leak-check=full --track-origins=yes --show-leak-kinds=all -s ./${TARGET}
+
 # Rule for debugging
 debug: $(SRCS)
 	$(CC) $(CFLAGS) $(DEBUG_DEFINE_FLAGS) -o $(TARGET) $(SRCS)
+
+# Rule for compiling with DEBUG_ and running the program (debug and run)
+start_debug: debug
+	./$(TARGET)
 
 # Run validation script for data.json file
 validate: ${VALIDATION_SRCS}
 	$(CC) ${CFLAGS} -o ${VALIDATION_TARGET} ${VALIDATION_SRCS}
 
-# Rule for compiling with DEBUG_ and running the program (debug and run)
-start_debug: debug
-	./$(TARGET)
+validate_valgrind:
+	valgrind --tool=memcheck --leak-check=full --track-origins=yes --show-leak-kinds=all -s ./${VALIDATION_TARGET}
 
 start_validate: validate
 	@echo -n "\n📄 Enter the file name (or leave empty for none): "; \
